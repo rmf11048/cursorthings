@@ -157,6 +157,14 @@
       background: #8b5cf6;
       border-color: #8b5cf6;
     }
+    .checkbox-wrap input:disabled + .checkbox-box {
+      opacity: 0.4;
+      border-color: #444;
+    }
+    td:has(.checkbox-wrap input:disabled) {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
   </style>
 </head>
 <body>
@@ -176,37 +184,37 @@
       </thead>
       <tbody id="slider-body">
         <tr data-level="0">
-          <td>Full control</td>
+          <td>Full control <span class="info-icon" title="Allow users who have this permission level in their default role to configure environment settings, deployment zones, etc. Over application(s), user has Change and Deploy.">i</span> </td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr data-level="1">
-          <td><span class="info-icon" title="Change and deploy applications">i</span> Change and deploy applications</td>
+          <td>Change and deploy applications <span class="info-icon" title="Allow publishing, tagging, configuring, and deploying the applications on the environment.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr data-level="2">
-          <td><span class="info-icon" title="Open and debug applications">i</span> Open and debug applications</td>
+          <td>Open and debug applications <span class="info-icon" title="Allow opening and debugging the applications.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr data-level="3">
-          <td><span class="info-icon" title="Monitor and add dependencies">i</span> Monitor and add dependencies</td>
+          <td>Monitor and add dependencies <span class="info-icon" title="Allow monitoring the environment and the applications, as well as adding dependencies to the public elements of the applications from other applications.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr data-level="4">
-          <td><span class="info-icon" title="List applications">i</span> List applications</td>
+          <td>List applications <span class="info-icon" title="Allow listing the applications and their versioning information.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr data-level="5">
-          <td><span class="info-icon" title="Access">i</span> Access</td>
+          <td>Access <span class="info-icon" title="Allow logging in to the environment with no access to the applications.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
@@ -220,7 +228,7 @@
     <table>
       <tbody>
         <tr>
-          <td>No access</td>
+          <td>No access <span class="info-icon" title="Deny access to the environment or the applications, depending if this permission level is assigned in the default role or for the applications.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-dev" data-col="dev" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-qa" data-col="qa" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-prod" data-col="prod" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
@@ -234,13 +242,13 @@
     <table>
       <tbody>
         <tr>
-          <td>Create applications</td>
+          <td>Create applications <span class="info-icon" title="Allow creating new applications. Requires the permission level 'Change and Deploy Applications', or above.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="create-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="create-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="create-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr>
-          <td>Add system dependencies</td>
+          <td>Add system dependencies <span class="info-icon" title="Allow users who have this permission in their default role to add dependencies to public entities of System module. Requires the permission level 'Access to Environment', or above.">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
@@ -252,6 +260,8 @@
   <script>
     const COLS = ['dev', 'qa', 'prod'];
     const MAX_LEVEL = 5;
+    const MIN_LEVEL_FOR_CREATE_APPS = 1; // Change and deploy applications or above (0 = Full control, 1 = Change and deploy)
+    const MIN_LEVEL_FOR_DEPS = 5;       // Access or above (5 = Access)
 
     function getSliderCheckboxes(col) {
       return document.querySelectorAll(`#slider-body input[data-col="${col}"][data-level]`);
@@ -271,6 +281,8 @@
       inputs.forEach((inp, i) => {
         inp.checked = level >= 0 && i >= level;
       });
+      updateCreateAppsState(col);
+      updateDepsState(col);
     }
 
     function setNoAccess(col, checked) {
@@ -280,10 +292,38 @@
         document.getElementById(`create-${col}`).checked = false;
         document.getElementById(`deps-${col}`).checked = false;
       }
+      updateCreateAppsState(col);
+      updateDepsState(col);
     }
 
     function clearNoAccess(col) {
       document.getElementById(`noaccess-${col}`).checked = false;
+    }
+
+    // Create applications requires "Change and deploy applications" (level 1) or above
+    const CREATE_APPS_DISABLED_TIP = "Requires \"Change and deploy applications\" or above.";
+    function updateCreateAppsState(col) {
+      const noAccess = document.getElementById(`noaccess-${col}`).checked;
+      const level = getSliderLevel(col);
+      const createCheckbox = document.getElementById(`create-${col}`);
+      const allowed = !noAccess && level <= MIN_LEVEL_FOR_CREATE_APPS;
+      createCheckbox.disabled = !allowed;
+      if (!allowed) createCheckbox.checked = false;
+      const cell = createCheckbox.closest('td');
+      if (cell) cell.title = allowed ? '' : CREATE_APPS_DISABLED_TIP;
+    }
+
+    // Add system dependencies requires Access (level 5) or above
+    const DEPS_DISABLED_TIP = "Requires Access or above.";
+    function updateDepsState(col) {
+      const noAccess = document.getElementById(`noaccess-${col}`).checked;
+      const level = getSliderLevel(col);
+      const depsCheckbox = document.getElementById(`deps-${col}`);
+      const allowed = !noAccess && level <= MIN_LEVEL_FOR_DEPS;
+      depsCheckbox.disabled = !allowed;
+      if (!allowed) depsCheckbox.checked = false;
+      const cell = depsCheckbox.closest('td');
+      if (cell) cell.title = allowed ? '' : DEPS_DISABLED_TIP;
     }
 
     // Slider: Full control (0) = all checked; Access (5) = all unchecked; middle = that row and below checked
@@ -320,6 +360,8 @@
     document.getElementById('create-dev').checked = true;
     setSliderLevel('qa', 2);
     setNoAccess('prod', true);
+    COLS.forEach(updateCreateAppsState);
+    COLS.forEach(updateDepsState);
   </script>
 </body>
 </html>
