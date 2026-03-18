@@ -34,6 +34,7 @@
     table {
       width: 100%;
       max-width: 720px;
+      table-layout: fixed;
       border-collapse: collapse;
       background: #252525;
       border: 1px solid #333;
@@ -50,10 +51,12 @@
       color: #b0b0b0;
       background: #2a2a2a;
     }
-    th:first-child {
+    th:first-child,
+    td:first-child {
       width: 40%;
     }
-    th:nth-child(n+2) {
+    th:nth-child(n+2),
+    td:nth-child(n+2) {
       text-align: center;
       width: 20%;
     }
@@ -61,9 +64,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-    td:nth-child(n+2) {
-      text-align: center;
+      white-space: nowrap;
     }
     /* Make entire cell clickable for checkbox columns */
     td:has(.checkbox-wrap) {
