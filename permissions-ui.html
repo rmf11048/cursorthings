@@ -65,6 +65,18 @@
     td:nth-child(n+2) {
       text-align: center;
     }
+    /* Make entire cell clickable for checkbox columns */
+    td:has(.checkbox-wrap) {
+      position: relative;
+      cursor: pointer;
+    }
+    td:has(.checkbox-wrap) .checkbox-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     tr:last-child td {
       border-bottom: none;
     }
