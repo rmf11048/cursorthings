@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permissions UI — Usability tests</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 24px 48px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      line-height: 1.6;
+      max-width: 720px;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 4px;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .nav-links a {
+      color: #c4b5fd;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .nav-links a:hover {
+      background: #3b2a5c;
+      color: #e9d5ff;
+    }
+    .nav-links .nav-current {
+      color: #fff;
+      padding: 6px 12px;
+      cursor: default;
+      pointer-events: none;
+    }
+    .nav-links .nav-sep {
+      color: #555;
+      padding: 0 4px;
+      user-select: none;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 8px 0;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 1.15rem;
+      color: #c4b5fd;
+      margin: 28px 0 12px 0;
+      padding-bottom: 4px;
+    }
+    h2:first-of-type { margin-top: 0; }
+    p { margin: 0 0 12px 0; }
+    ul, ol { margin: 0 0 16px 0; padding-left: 1.25rem; }
+    li { margin-bottom: 8px; }
+    .task {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .task h3 {
+      font-size: 1rem;
+      color: #fff;
+      margin: 0 0 8px 0;
+    }
+    .task .task-id {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    .task .scenario {
+      color: #b0b0b0;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .task .steps {
+      margin: 12px 0 0 0;
+      padding-left: 1.25rem;
+    }
+    .task .steps li { margin-bottom: 4px; }
+    .task .success {
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: #1e3a2f;
+      border: 1px solid #2d5a45;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #86efac;
+    }
+    .intro-box {
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="permissions-ui.html">Prototype</a>
+    <span class="nav-sep">|</span>
+    <a href="permissions-ux-analysis.html">UX analysis</a>
+    <span class="nav-sep">|</span>
+    <span class="nav-current">Usability tests</span>
+  </nav>
+  <h1>Permissions UI — Usability tests</h1>
+  <p class="subtitle">Simulated test scenarios for administrators</p>
+
+  <div class="intro-box">
+    <p>
+      Use these tasks during moderated or unmoderated sessions. Give the participant the prototype and read each scenario and task. Observe whether they complete the task, where they hesitate, and whether they need help. You can time each task and note errors or recovery.
+    </p>
+  </div>
+
+  <h2>Task 1 — Restrict Production access</h2>
+  <div class="task">
+    <div class="task-id">T1 · ~1 min</div>
+    <h3>Restrict Production to “No access”</h3>
+    <p class="scenario">“Your team has decided that this role should not have any access to Production. Update the permissions so that Production has no access.”</p>
+    <ol class="steps">
+      <li>Participant opens or is already on the Permissions prototype.</li>
+      <li>Participant finds the Production column.</li>
+      <li>Participant checks “No access” for Production (or clears other permissions until only No access applies).</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> Production column shows only “No access” checked; no permission levels or Create applications / Add system dependencies are selected.</p>
+  </div>
+
+  <h2>Task 2 — Grant “Create applications” in QA</h2>
+  <div class="task">
+    <div class="task-id">T2 · ~2 min</div>
+    <h3>Enable Create applications for QA</h3>
+    <p class="scenario">“QA needs to be able to create applications in the QA environment. Set the QA column so that they can create applications there.”</p>
+    <ol class="steps">
+      <li>Participant finds the QA column.</li>
+      <li>Participant sets the permission level to “Change and deploy applications” or “Full control” (required for Create applications).</li>
+      <li>Participant checks “Create applications” for QA.</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> QA has at least “Change and deploy applications” (or Full control), and “Create applications” is checked for QA.</p>
+  </div>
+
+  <h2>Task 3 — Set “Open and debug” for QA</h2>
+  <div class="task">
+    <div class="task-id">T3 · ~1 min</div>
+    <h3>Set QA to “Open and debug applications” only</h3>
+    <p class="scenario">“For QA we only want this role to open and debug applications, not change or deploy. Set QA to that level.”</p>
+    <ol class="steps">
+      <li>Participant finds the QA column.</li>
+      <li>Participant selects “Open and debug applications” (and understands that this and the rows below are checked, not Full control or Change and deploy).</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> In QA, “Open and debug applications” is the highest checked row in the permission list; “Full control” and “Change and deploy applications” are unchecked.</p>
+  </div>
+
+  <h2>Task 4 — Add system dependencies in Development</h2>
+  <div class="task">
+    <div class="task-id">T4 · ~1 min</div>
+    <h3>Allow adding system dependencies in Development</h3>
+    <p class="scenario">“Developers should be able to add system dependencies in the Development environment. Enable that for Development.”</p>
+    <ol class="steps">
+      <li>Participant ensures Development has at least “Access” (any permission level is enough).</li>
+      <li>Participant checks “Add system dependencies” for Development.</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> “Add system dependencies” is checked for Development (and Development is not “No access”).</p>
+  </div>
+
+  <h2>Task 5 — Understand why Create applications is disabled</h2>
+  <div class="task">
+    <div class="task-id">T5 · ~1 min</div>
+    <h3>Find out why Create applications is disabled</h3>
+    <p class="scenario">“In the current setup, ‘Create applications’ is disabled for QA. Without clicking it, find out why it’s disabled and what would be needed to enable it.”</p>
+    <ol class="steps">
+      <li>Participant hovers or focuses the disabled “Create applications” cell for QA (or reads the UI).</li>
+      <li>Participant sees the tooltip or infers that a higher permission level is required (e.g. “Change and deploy applications or above”).</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> Participant correctly states that a higher permission level (e.g. Change and deploy or Full control) is required, using the tooltip or the hierarchy.</p>
+  </div>
+
+  <h2>Task 6 — Full setup from scratch</h2>
+  <div class="task">
+    <div class="task-id">T6 · ~3 min</div>
+    <h3>Configure all three environments</h3>
+    <p class="scenario">“Configure permissions so that: Development has full control and can create applications; QA has open and debug only and cannot create applications; Production has no access.”</p>
+    <ol class="steps">
+      <li>Participant sets Development to Full control and checks Create applications (and optionally Add system dependencies).</li>
+      <li>Participant sets QA to “Open and debug applications” (Create applications should be disabled/unchecked).</li>
+      <li>Participant sets Production to No access.</li>
+    </ol>
+    <p class="success"><strong>Success:</strong> Development = Full control + Create applications; QA = Open and debug only, Create applications not selected; Production = No access only.</p>
+  </div>
+
+  <h2>Notes for facilitators</h2>
+  <ul>
+    <li>Reset the prototype to the initial state between participants (or document the starting state).</li>
+    <li>For T2 and T5, watch whether participants discover the level requirement and the tooltip.</li>
+    <li>Record time-on-task, success rate, and any verbal feedback about the hierarchy or the “Create applications” / “Add system dependencies” rules.</li>
+  </ul>
+</body>
+</html>

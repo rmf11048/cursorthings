@@ -15,14 +15,40 @@
       line-height: 1.6;
       max-width: 720px;
     }
-    .nav-link {
-      display: inline-block;
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 4px;
       margin-bottom: 24px;
-      color: #a78bfa;
-      text-decoration: none;
-      font-size: 0.9rem;
+      padding: 12px 16px;
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
     }
-    .nav-link:hover { text-decoration: underline; }
+    .nav-links a {
+      color: #c4b5fd;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .nav-links a:hover {
+      background: #3b2a5c;
+      color: #e9d5ff;
+    }
+    .nav-links .nav-current {
+      color: #fff;
+      padding: 6px 12px;
+      cursor: default;
+      pointer-events: none;
+    }
+    .nav-links .nav-sep {
+      color: #555;
+      padding: 0 4px;
+      user-select: none;
+    }
     h1 {
       font-size: 1.5rem;
       font-weight: 600;
@@ -120,7 +146,13 @@
   </style>
 </head>
 <body>
-  <a href="permissions-ui.html" class="nav-link">← Back to prototype</a>
+  <nav class="nav-links">
+    <a href="permissions-ui.html">Prototype</a>
+    <span class="nav-sep">|</span>
+    <span class="nav-current">UX analysis</span>
+    <span class="nav-sep">|</span>
+    <a href="permissions-usability-tests.html">Usability tests</a>
+  </nav>
   <h1>Permissions UI — Usability analysis</h1>
   <p class="subtitle">Evaluation against Nielsen Norman Group’s 10 usability heuristics</p>
 
