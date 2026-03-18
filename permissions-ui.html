@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permissions</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #a78bfa;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 24px 0;
+    }
+    table {
+      width: 100%;
+      max-width: 720px;
+      border-collapse: collapse;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      font-weight: 600;
+      color: #b0b0b0;
+      background: #2a2a2a;
+    }
+    th:first-child {
+      width: 40%;
+    }
+    th:nth-child(n+2) {
+      text-align: center;
+      width: 20%;
+    }
+    td:first-child {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    td:nth-child(n+2) {
+      text-align: center;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .section {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section:last-of-type {
+      margin-bottom: 0;
+    }
+    .section table {
+      border: none;
+      border-radius: 0;
+      margin: 0;
+    }
+    .section tr:first-child td,
+    .section tr:first-child th {
+      border-top: none;
+    }
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #444;
+      color: #888;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: help;
+      flex-shrink: 0;
+    }
+    .info-icon:hover {
+      background: #555;
+      color: #aaa;
+    }
+    .checkbox-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .checkbox-wrap input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .checkbox-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 2px solid #555;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .checkbox-box svg {
+      width: 12px;
+      height: 12px;
+      color: #fff;
+    }
+    .checkbox-wrap input:checked + .checkbox-box {
+      background: #7c3aed;
+      border-color: #7c3aed;
+    }
+    .checkbox-wrap:hover .checkbox-box {
+      border-color: #666;
+    }
+    .checkbox-wrap input:checked:hover + .checkbox-box {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+    }
+  </style>
+</head>
+<body>
+  <a href="permissions-ux-analysis.html" class="nav-link">← UX analysis & heuristics</a>
+  <h1>Permissions</h1>
+
+  <!-- Top section: hierarchical slider (Full control → Access) -->
+  <div class="section">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Development</th>
+          <th>QA</th>
+          <th>Production</th>
+        </tr>
+      </thead>
+      <tbody id="slider-body">
+        <tr data-level="0">
+          <td>Full control</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="0"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr data-level="1">
+          <td><span class="info-icon" title="Change and deploy applications">i</span> Change and deploy applications</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="1"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr data-level="2">
+          <td><span class="info-icon" title="Open and debug applications">i</span> Open and debug applications</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="2"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr data-level="3">
+          <td><span class="info-icon" title="Monitor and add dependencies">i</span> Monitor and add dependencies</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="3"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr data-level="4">
+          <td><span class="info-icon" title="List applications">i</span> List applications</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="4"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr data-level="5">
+          <td><span class="info-icon" title="Access">i</span> Access</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="dev" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="qa" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" data-col="prod" data-level="5"><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- No access -->
+  <div class="section">
+    <table>
+      <tbody>
+        <tr>
+          <td>No access</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-dev" data-col="dev" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-qa" data-col="qa" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="noaccess-prod" data-col="prod" data-noaccess><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom section: independent checkboxes -->
+  <div class="section">
+    <table>
+      <tbody>
+        <tr>
+          <td>Create applications</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="create-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="create-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="create-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+        <tr>
+          <td>Add system dependencies</td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="deps-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="deps-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+          <td><label class="checkbox-wrap"><input type="checkbox" id="deps-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const COLS = ['dev', 'qa', 'prod'];
+    const MAX_LEVEL = 5;
+
+    function getSliderCheckboxes(col) {
+      return document.querySelectorAll(`#slider-body input[data-col="${col}"][data-level]`);
+    }
+
+    function getSliderLevel(col) {
+      const inputs = getSliderCheckboxes(col);
+      for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i].checked) return i;
+      }
+      return 5; // Access = none checked
+    }
+
+    // level 0 = Full control (all checked), level 5 = Access (only Access checked), -1 = all unchecked (No access)
+    function setSliderLevel(col, level) {
+      const inputs = getSliderCheckboxes(col);
+      inputs.forEach((inp, i) => {
+        inp.checked = level >= 0 && i >= level;
+      });
+    }
+
+    function setNoAccess(col, checked) {
+      document.getElementById(`noaccess-${col}`).checked = checked;
+      if (checked) {
+        setSliderLevel(col, -1);
+        document.getElementById(`create-${col}`).checked = false;
+        document.getElementById(`deps-${col}`).checked = false;
+      }
+    }
+
+    function clearNoAccess(col) {
+      document.getElementById(`noaccess-${col}`).checked = false;
+    }
+
+    // Slider: Full control (0) = all checked; Access (5) = all unchecked; middle = that row and below checked
+    document.getElementById('slider-body').addEventListener('change', (e) => {
+      const input = e.target;
+      if (!input.matches('input[data-level]')) return;
+      const col = input.dataset.col;
+      const level = parseInt(input.dataset.level, 10);
+      clearNoAccess(col);
+      if (input.checked) {
+        setSliderLevel(col, level); // level 5 (Access) → all unchecked
+      } else {
+        setSliderLevel(col, Math.min(level + 1, 5)); // uncheck this and above, keep below
+      }
+    });
+
+    // No access: when checked, uncheck everything else in that column
+    document.querySelectorAll('input[data-noaccess]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const col = input.dataset.col;
+        if (input.checked) setNoAccess(col, true);
+      });
+    });
+
+    // When any other permission is set in a column, uncheck "No access"
+    document.querySelectorAll('#slider-body input, input[data-standalone]').forEach((input) => {
+      input.addEventListener('change', () => {
+        if (input.checked) clearNoAccess(input.dataset.col);
+      });
+    });
+
+    // Initial state: Dev = Full control (all 6) + Create apps; QA = Open and debug (level 2); Prod = No access
+    setSliderLevel('dev', 0);
+    document.getElementById('create-dev').checked = true;
+    setSliderLevel('qa', 2);
+    setNoAccess('prod', true);
+  </script>
+</body>
+</html>
