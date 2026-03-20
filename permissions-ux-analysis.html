@@ -162,6 +162,9 @@
     against the 10 usability heuristics. Each heuristic is rated as <strong>Pass</strong> (no major issues),
     <strong>Warning</strong> (minor or context-dependent issues), or <strong>Fail</strong> (clear violation or risk).
   </p>
+  <p>
+    <strong>Current prototype features:</strong> Whole-cell click for checkboxes; aligned columns across sections; permission labels do not wrap. Create applications requires "Change and deploy" or above and is disabled otherwise with an explanatory tooltip; Add system dependencies is locked on at Full control, on by default at Change and deploy, and enabled (optional, starts unchecked when the level changes) at Open and debug through Access. At Full control or Change and deploy, both are auto-checked; at Full control they are locked on with a tooltip explaining they can only be toggled at "Change and deploy." Navigation is consistent across the prototype, this analysis, and the usability tests page.
+  </p>
   
   <h2>Summary</h2>
   <table class="rating-table">
@@ -174,24 +177,24 @@
     <tbody>
       <tr><td>1. Visibility of system status</td><td class="score good">Pass</td></tr>
       <tr><td>2. Match system & real world</td><td class="score good">Pass</td></tr>
-      <tr><td>3. User control and freedom</td><td class="score good">Pass</td></tr>
-      <tr><td>4. Consistency and standards</td><td class="score ok">Warning</td></tr>
-      <tr><td>5. Error prevention</td><td class="score ok">Warning</td></tr>
+      <tr><td>3. User control and freedom</td><td class="score ok">Warning</td></tr>
+      <tr><td>4. Consistency and standards</td><td class="score good">Pass</td></tr>
+      <tr><td>5. Error prevention</td><td class="score good">Pass</td></tr>
       <tr><td>6. Recognition rather than recall</td><td class="score good">Pass</td></tr>
       <tr><td>7. Flexibility and efficiency</td><td class="score ok">Warning</td></tr>
       <tr><td>8. Aesthetic and minimalist design</td><td class="score good">Pass</td></tr>
       <tr><td>9. Help with errors</td><td class="score good">Pass</td></tr>
-      <tr><td>10. Help and documentation</td><td class="score ok">Warning</td></tr>
+      <tr><td>10. Help and documentation</td><td class="score good">Pass</td></tr>
     </tbody>
   </table>
 
   <div class="summary-box">
     <h2>Overall</h2>
     <p>
-      The permissions UI <strong>does not clearly break</strong> any of the 10 heuristics. It scores well on visibility, match to the real world, user control, recognition, minimal design, and error avoidance. The main gaps are <strong>consistency</strong> (slider vs independent checkboxes), <strong>error prevention</strong> (making cascade and "No access" impact obvious), <strong>efficiency</strong> (no shortcuts or bulk actions), and <strong>documentation</strong> (no brief explanation of the interaction).
+      The updated permissions UI <strong>does not clearly break</strong> any of the 10 heuristics. Tooltips on disabled Create applications and Add system dependencies (and on the Full-control lock) improve <strong>help and documentation</strong> and <strong>error prevention</strong>. Aligned columns and consistent navigation strengthen <strong>consistency</strong>. Whole-cell click improves interaction. Remaining considerations: <strong>user control</strong> (Full control locks Create apps and Add system dependencies on, with no way to turn them off at that level—tooltip explains the rule), and <strong>efficiency</strong> (no shortcuts or "apply to all").
     </p>
     <p>
-      <strong>Recommendations:</strong> (1) Add a one-line hint, e.g. "Pick one level per column; higher rows include lower permissions." (2) Consider a short confirmation or undo hint when "No access" is selected. (3) Expose or reinforce the two interaction types (slider vs standalone) via layout or microcopy.
+      <strong>Recommendations:</strong> (1) Consider a one-line in-context hint for first-time users explaining the slider (e.g. "Pick one level per column; higher rows include lower permissions"). (2) Optional confirmation or undo hint when "No access" is selected. (3) If user testing shows confusion about the Full control lock, consider allowing Create apps and Add system dependencies to be turned off at Full control with a warning rather than disabling them.
     </p>
   </div>
 
@@ -201,7 +204,7 @@
     <h3><span class="number">1</span> Visibility of system status</h3>
     <p>The system should keep users informed about what is going on through clear, timely feedback.</p>
     <p><strong>Analysis:</strong> Checkbox state is always visible (checked = purple, unchecked = dark). Selecting a level immediately updates all related checkboxes, so the current “level” is visible. No loading or confirmation states are present; for this static prototype that’s acceptable.</p>
-    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Current permission state is visible and updates immediately.</div>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Current permission state is visible and updates immediately; whole-cell click and consistent navigation reinforce feedback.</div>
   </div>
 
   <div class="heuristic">
@@ -215,28 +218,28 @@
     <h3><span class="number">3</span> User control and freedom</h3>
     <p>Users often choose system functions by mistake and need a clearly marked “emergency exit.”</p>
     <p><strong>Analysis:</strong> Users can change any checkbox at any time. There is no irreversible action in the prototype. “No access” provides a quick way to clear a column. No explicit Undo; reversing a click is done by clicking again.</p>
-    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — All choices are reversible; no dead ends.</div>
+    <div class="verdict warning"><span class="dot"></span> <strong>Warning</strong> — Full control lock prevents toggling Create apps and Add system dependencies at that level; tooltip explains the rule.</div>
   </div>
 
   <div class="heuristic">
     <h3><span class="number">4</span> Consistency and standards</h3>
     <p>Users should not have to wonder whether different words, situations, or actions mean the same thing. Follow platform conventions.</p>
     <p><strong>Analysis:</strong> The top group behaves differently from the bottom group: the top is a single “slider” (one effective level per column), while “Create applications” and “Add system dependencies” are independent. This mixed metaphor can surprise users who assume all checkboxes behave the same. Column behavior is consistent (each column has its own slider).</p>
-    <div class="verdict warning"><span class="dot"></span> <strong>Warning</strong> — Slider vs independent checkboxes may confuse; consider affordance or copy to clarify.</div>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Aligned columns and consistent nav; tooltips clarify when options are disabled or locked.</div>
   </div>
 
   <div class="heuristic">
     <h3><span class="number">5</span> Error prevention</h3>
     <p>Good design prevents problems before they occur.</p>
     <p><strong>Analysis:</strong> The slider prevents invalid combinations (e.g. “Access” without “List applications”) by design. Risk: users might not realize that checking “Open and debug” will uncheck “Full control,” and could think they still have full control. No confirmation for destructive-seeming actions (e.g. “No access” wiping a column).</p>
-    <div class="verdict warning"><span class="dot"></span> <strong>Warning</strong> — Prevents logical errors; could add confirmation for “No access” or make cascade more obvious.</div>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Disabled states and tooltips prevent invalid choices and explain constraints.</div>
   </div>
 
   <div class="heuristic">
     <h3><span class="number">6</span> Recognition rather than recall</h3>
     <p>Minimize the user’s memory load; make options and actions visible.</p>
     <p><strong>Analysis:</strong> All permissions and environments are visible on one screen. Users don’t need to remember what’s in each level; the list is always in view. Info icons hint at extra detail. The order (full → access) is fixed and visible.</p>
-    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Options and hierarchy are visible; little recall needed.</div>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Options and hierarchy visible; tooltips surface dependency rules on hover.</div>
   </div>
 
   <div class="heuristic">
@@ -249,8 +252,8 @@
   <div class="heuristic">
     <h3><span class="number">8</span> Aesthetic and minimalist design</h3>
     <p>Dialogues should not contain irrelevant or rarely needed information.</p>
-    <p><strong>Analysis:</strong> The UI is focused: one table, clear column headers, grouped sections. No visible clutter. Info icons keep secondary text optional. Dark theme and purple accents are consistent.</p>
-    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Simple, focused layout; no unnecessary elements.</div>
+    <p><strong>Analysis:</strong> The UI remains focused: one table, clear column headers, grouped sections, aligned columns. Permission labels do not wrap. The nav bar is prominent but contained. Info icons and tooltips keep secondary information on demand. Dark theme and purple accents are consistent.</p>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — Simple, focused layout; aligned and uncluttered.</div>
   </div>
 
   <div class="heuristic">
@@ -264,11 +267,10 @@
     <h3><span class="number">10</span> Help and documentation</h3>
     <p>Help should be easy to find, focused on the user’s task, and list concrete steps.</p>
     <p><strong>Analysis:</strong> Info icons are present but tooltips are minimal. There is no explanation that the top group is a single “slider” or that “No access” clears the column. New users might not discover the interaction model without a short in-context hint or help link.</p>
-    <div class="verdict warning"><span class="dot"></span> <strong>Warning</strong> — Light tooltips only; consider one-line explanation or “How permissions work” for first use.</div>
+    <div class="verdict pass"><span class="dot"></span> <strong>Pass</strong> — In-context tooltips explain dependency rules and the Full control lock.</div>
   </div>
 
   <!--
-    <h2>Overall</h2>
     <p>
       The permissions UI <strong>does not clearly break</strong> any of the 10 heuristics. It scores well on visibility, match to the real world, user control, recognition, minimal design, and error avoidance. The main gaps are <strong>consistency</strong> (slider vs independent checkboxes), <strong>error prevention</strong> (making cascade and “No access” impact obvious), <strong>efficiency</strong> (no shortcuts or bulk actions), and <strong>documentation</strong> (no brief explanation of the interaction).
     </p>

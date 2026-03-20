@@ -278,7 +278,7 @@
           <td><label class="checkbox-wrap"><input type="checkbox" id="create-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
         </tr>
         <tr>
-          <td>Add system dependencies <span class="info-icon" title="Allow users who have this permission in their default role to add dependencies to public entities of System module. Requires the permission level 'Access to Environment', or above.">i</span></td>
+          <td>Add system dependencies <span class="info-icon" title="Allow users who have this permission in their default role to add dependencies to public entities of System module. Available at Full control (on and locked), Change and deploy (on by default), or Open and debug through Access (optional checkbox).">i</span></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
           <td><label class="checkbox-wrap"><input type="checkbox" id="deps-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></td>
@@ -291,7 +291,6 @@
     const COLS = ['dev', 'qa', 'prod'];
     const MAX_LEVEL = 5;
     const MIN_LEVEL_FOR_CREATE_APPS = 1; // Change and deploy applications or above (0 = Full control, 1 = Change and deploy)
-    const MIN_LEVEL_FOR_DEPS = 5;       // Access or above (5 = Access)
 
     function getSliderCheckboxes(col) {
       return document.querySelectorAll(`#slider-body input[data-col="${col}"][data-level]`);
@@ -332,28 +331,57 @@
 
     // Create applications requires "Change and deploy applications" (level 1) or above
     const CREATE_APPS_DISABLED_TIP = "Requires \"Change and deploy applications\" or above.";
+    const FULL_CONTROL_LOCK_TIP = "These can only be toggled for the permission level 'Change and deploy'.";
     function updateCreateAppsState(col) {
       const noAccess = document.getElementById(`noaccess-${col}`).checked;
       const level = getSliderLevel(col);
       const createCheckbox = document.getElementById(`create-${col}`);
-      const allowed = !noAccess && level <= MIN_LEVEL_FOR_CREATE_APPS;
-      createCheckbox.disabled = !allowed;
-      if (!allowed) createCheckbox.checked = false;
       const cell = createCheckbox.closest('td');
-      if (cell) cell.title = allowed ? '' : CREATE_APPS_DISABLED_TIP;
+      if (noAccess || level > MIN_LEVEL_FOR_CREATE_APPS) {
+        createCheckbox.disabled = true;
+        createCheckbox.checked = false;
+        if (cell) cell.title = CREATE_APPS_DISABLED_TIP;
+      } else if (level === 0) {
+        // Full control: checked and disabled (cannot toggle)
+        createCheckbox.disabled = true;
+        createCheckbox.checked = true;
+        if (cell) cell.title = FULL_CONTROL_LOCK_TIP;
+      } else if (level === 1) {
+        // Change and deploy: checked and enabled (user can toggle off)
+        createCheckbox.disabled = false;
+        createCheckbox.checked = true;
+        if (cell) cell.title = '';
+      }
     }
 
-    // Add system dependencies requires Access (level 5) or above
-    const DEPS_DISABLED_TIP = "Requires Access or above.";
+    // Add system dependencies: Full control (locked on) or Change and deploy (on by default, toggleable);
+    // Open and debug through Access (2–5): enabled, unchecked when level changes (user can check)
+    const DEPS_DISABLED_NO_ACCESS_TIP = "Requires access to this environment.";
     function updateDepsState(col) {
       const noAccess = document.getElementById(`noaccess-${col}`).checked;
       const level = getSliderLevel(col);
       const depsCheckbox = document.getElementById(`deps-${col}`);
-      const allowed = !noAccess && level <= MIN_LEVEL_FOR_DEPS;
-      depsCheckbox.disabled = !allowed;
-      if (!allowed) depsCheckbox.checked = false;
       const cell = depsCheckbox.closest('td');
-      if (cell) cell.title = allowed ? '' : DEPS_DISABLED_TIP;
+      if (noAccess) {
+        depsCheckbox.disabled = true;
+        depsCheckbox.checked = false;
+        if (cell) cell.title = DEPS_DISABLED_NO_ACCESS_TIP;
+      } else if (level === 0) {
+        // Full control: checked and disabled (cannot toggle)
+        depsCheckbox.disabled = true;
+        depsCheckbox.checked = true;
+        if (cell) cell.title = FULL_CONTROL_LOCK_TIP;
+      } else if (level === 1) {
+        // Change and deploy: checked and enabled (user can toggle off)
+        depsCheckbox.disabled = false;
+        depsCheckbox.checked = true;
+        if (cell) cell.title = '';
+      } else if (level >= 2 && level <= 5) {
+        // Open and debug, Monitor…, List applications, Access: enabled; reset unchecked on level change
+        depsCheckbox.disabled = false;
+        depsCheckbox.checked = false;
+        if (cell) cell.title = '';
+      }
     }
 
     // Slider: Full control (0) = all checked; Access (5) = all unchecked; middle = that row and below checked

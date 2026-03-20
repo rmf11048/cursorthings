@@ -176,10 +176,10 @@
     <h3>Allow adding system dependencies in Development</h3>
     <p class="scenario">“Developers should be able to add system dependencies in the Development environment. Enable that for Development.”</p>
     <ol class="steps">
-      <li>Participant ensures Development has at least “Access” (any permission level is enough).</li>
-      <li>Participant checks “Add system dependencies” for Development.</li>
+      <li>Participant sets Development to “Open and debug applications” (or another level from Open and debug through Access).</li>
+      <li>Participant checks “Add system dependencies” for Development (the option is enabled at those levels).</li>
     </ol>
-    <p class="success"><strong>Success:</strong> “Add system dependencies” is checked for Development (and Development is not “No access”).</p>
+    <p class="success"><strong>Success:</strong> “Add system dependencies” is checked for Development while Development is not “No access” (e.g. at Open and debug or higher in the slider).</p>
   </div>
 
   <h2>Task 5 — Understand why Create applications is disabled</h2>
@@ -204,7 +204,7 @@
       <li>Participant sets QA to “Open and debug applications” (Create applications should be disabled/unchecked).</li>
       <li>Participant sets Production to No access.</li>
     </ol>
-    <p class="success"><strong>Success:</strong> Development = Full control + Create applications; QA = Open and debug only, Create applications not selected; Production = No access only.</p>
+    <p class="success"><strong>Success:</strong> Development = Full control + Create applications (Add system dependencies on and locked); QA = Open and debug only, Create applications not selected, Add system dependencies optional (typically off after level change); Production = No access only.</p>
   </div>
 
   <h2>Notes for facilitators</h2>
