@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permissions — vertical slider</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 4px;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .nav-links a {
+      color: #c4b5fd;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .nav-links a:hover { background: #3b2a5c; color: #e9d5ff; }
+    .nav-links .nav-current {
+      color: #fff;
+      padding: 6px 12px;
+      cursor: default;
+      pointer-events: none;
+    }
+    .nav-links .nav-sep { color: #555; padding: 0 4px; user-select: none; }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 8px 0;
+    }
+    .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 24px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .section {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section:last-of-type { margin-bottom: 0; }
+    /* One grid: label column + 3 env columns (sliders + checkboxes aligned) */
+    .perm-shell {
+      max-width: 720px;
+      padding: 16px 20px 20px;
+    }
+    .perm-grid {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.2fr) repeat(3, minmax(0, 1fr));
+      gap: 0 12px;
+      align-items: stretch;
+      justify-items: stretch;
+      /* Same inner columns as slider row: flanks | range | gap | level label | flanks */
+      --env-slot-columns: 1fr auto 10px min(118px, 32%) 1fr;
+    }
+    .perm-corner { min-height: 8px; }
+    .perm-env-head {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #b0b0b0;
+      text-align: center;
+      padding: 8px 4px 12px;
+      border-bottom: 1px solid #333;
+    }
+    .slider-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px 8px 8px 0;
+      font-size: 0.8rem;
+      color: #b0b0b0;
+      border-bottom: 1px solid #333;
+    }
+    .slider-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      line-height: 1.2;
+      padding: 2px 0;
+      text-align: right;
+    }
+    .slider-label-row .label-strong { color: #e0e0e0; font-weight: 500; }
+    /* Grid matches Create apps / Deps rows so checkboxes sit under the range column */
+    .slider-track-wrap {
+      display: grid;
+      grid-template-columns: var(--env-slot-columns);
+      align-items: center;
+      column-gap: 0;
+      min-height: 280px;
+      padding: 8px 4px;
+      border-bottom: 1px solid #333;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .slider-range-col {
+      grid-column: 2;
+      justify-self: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 260px;
+    }
+    /* Same height as track; label is absolutely positioned to match thumb */
+    .slider-current-track {
+      grid-column: 4;
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      height: 260px;
+      justify-self: stretch;
+    }
+    .slider-current-level {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #c4b5fd;
+      line-height: 1.25;
+      text-align: left;
+      transform: translateY(-50%);
+      pointer-events: none;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .perm-row-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      padding: 12px 8px 12px 0;
+      border-bottom: 1px solid #333;
+    }
+    .perm-check-cell {
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 8px;
+      border-bottom: 1px solid #333;
+    }
+    .perm-check-cell .checkbox-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Align checkbox with vertical slider (same grid as .slider-track-wrap) */
+    .perm-check-cell--env-slot {
+      padding: 0;
+    }
+    .perm-check-cell--env-slot .checkbox-wrap {
+      position: relative;
+      inset: auto;
+      display: grid;
+      grid-template-columns: var(--env-slot-columns);
+      align-items: center;
+      width: 100%;
+      min-height: 48px;
+      padding: 8px 4px;
+      box-sizing: border-box;
+    }
+    .perm-check-cell--env-slot .checkbox-wrap input {
+      grid-column: 2;
+      justify-self: center;
+      align-self: center;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+      opacity: 0;
+    }
+    .perm-check-cell--env-slot .checkbox-wrap .checkbox-box {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: center;
+    }
+    .perm-grid > .perm-row-label:nth-child(13),
+    .perm-grid > .perm-check-cell:nth-child(14),
+    .perm-grid > .perm-check-cell:nth-child(15),
+    .perm-grid > .perm-check-cell:nth-child(16) {
+      border-bottom: none;
+    }
+    /* Vertical range: WebKit */
+    input[type="range"].perm-level-range {
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      width: 32px;
+      min-height: 260px;
+      height: 260px;
+      cursor: pointer;
+      accent-color: #7c3aed;
+    }
+    /* Firefox */
+    input[type="range"].perm-level-range::-moz-range-track {
+      background: #444;
+      border-radius: 4px;
+    }
+    input[type="range"].perm-level-range::-moz-range-thumb {
+      background: #7c3aed;
+      border: none;
+      border-radius: 4px;
+    }
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #444;
+      color: #888;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: help;
+      flex-shrink: 0;
+    }
+    .info-icon:hover { background: #555; color: #aaa; }
+    .checkbox-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .checkbox-wrap input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .checkbox-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 2px solid #555;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .checkbox-box svg { width: 12px; height: 12px; color: #fff; }
+    .checkbox-wrap input:checked + .checkbox-box {
+      background: #7c3aed;
+      border-color: #7c3aed;
+    }
+    .checkbox-wrap:hover .checkbox-box { border-color: #666; }
+    .checkbox-wrap input:checked:hover + .checkbox-box {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+    }
+    .checkbox-wrap input:disabled + .checkbox-box {
+      opacity: 0.4;
+      border-color: #444;
+    }
+    .perm-check-cell:has(.checkbox-wrap input:disabled) {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="permissions-ui.html">Checkbox prototype</a>
+    <span class="nav-sep">|</span>
+    <span class="nav-current">Slider prototype</span>
+    <span class="nav-sep">|</span>
+    <a href="permissions-ux-analysis.html">UX analysis</a>
+    <span class="nav-sep">|</span>
+    <a href="permissions-usability-tests.html">Usability tests</a>
+  </nav>
+  <h1>Permissions</h1>
+  <p class="subtitle">Permission levels per environment (vertical slider). Bottom of the slider is No access—no separate row. Same rules as the checkbox prototype.</p>
+
+  <!-- Hidden checkbox matrix: drives all logic (identical to checkbox page) -->
+  <div id="slider-body" class="sr-only" aria-hidden="true">
+    <table>
+      <tbody>
+        <tr data-level="0">
+          <td><input type="checkbox" data-col="dev" data-level="0"><input type="checkbox" data-col="qa" data-level="0"><input type="checkbox" data-col="prod" data-level="0"></td>
+        </tr>
+        <tr data-level="1">
+          <td><input type="checkbox" data-col="dev" data-level="1"><input type="checkbox" data-col="qa" data-level="1"><input type="checkbox" data-col="prod" data-level="1"></td>
+        </tr>
+        <tr data-level="2">
+          <td><input type="checkbox" data-col="dev" data-level="2"><input type="checkbox" data-col="qa" data-level="2"><input type="checkbox" data-col="prod" data-level="2"></td>
+        </tr>
+        <tr data-level="3">
+          <td><input type="checkbox" data-col="dev" data-level="3"><input type="checkbox" data-col="qa" data-level="3"><input type="checkbox" data-col="prod" data-level="3"></td>
+        </tr>
+        <tr data-level="4">
+          <td><input type="checkbox" data-col="dev" data-level="4"><input type="checkbox" data-col="qa" data-level="4"><input type="checkbox" data-col="prod" data-level="4"></td>
+        </tr>
+        <tr data-level="5">
+          <td><input type="checkbox" data-col="dev" data-level="5"><input type="checkbox" data-col="qa" data-level="5"><input type="checkbox" data-col="prod" data-level="5"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section perm-shell">
+    <div class="perm-grid">
+      <div class="perm-corner"></div>
+      <div class="perm-env-head">Development</div>
+      <div class="perm-env-head">QA</div>
+      <div class="perm-env-head">Production</div>
+
+      <div class="slider-labels">
+        <div class="slider-label-row"><span class="label-strong">Full control</span> <span class="info-icon" title="Allow users who have this permission level in their default role to configure environment settings, deployment zones, etc. Over application(s), user has Change and Deploy.">i</span></div>
+        <div class="slider-label-row">Change and deploy applications <span class="info-icon" title="Allow publishing, tagging, configuring, and deploying the applications on the environment.">i</span></div>
+        <div class="slider-label-row">Open and debug applications <span class="info-icon" title="Allow opening and debugging the applications.">i</span></div>
+        <div class="slider-label-row">Monitor and add dependencies <span class="info-icon" title="Allow monitoring the environment and the applications, as well as adding dependencies to the public elements of the applications from other applications.">i</span></div>
+        <div class="slider-label-row">List applications <span class="info-icon" title="Allow listing the applications and their versioning information.">i</span></div>
+        <div class="slider-label-row">Access <span class="info-icon" title="Allow logging in to the environment with no access to the applications.">i</span></div>
+        <div class="slider-label-row"><span class="label-strong">No access</span> <span class="info-icon" title="Deny access to the environment or the applications, depending if this permission level is assigned in the default role or for the applications.">i</span></div>
+      </div>
+      <div class="slider-track-wrap">
+        <div class="slider-range-col">
+          <input type="range" class="perm-level-range" data-col="dev" min="0" max="6" step="1" value="6" orient="vertical" aria-label="Development permission level" aria-valuetext="">
+        </div>
+        <div class="slider-current-track">
+          <div class="slider-current-level" data-col="dev" aria-live="polite">Full control</div>
+        </div>
+      </div>
+      <div class="slider-track-wrap">
+        <div class="slider-range-col">
+          <input type="range" class="perm-level-range" data-col="qa" min="0" max="6" step="1" value="4" orient="vertical" aria-label="QA permission level" aria-valuetext="">
+        </div>
+        <div class="slider-current-track">
+          <div class="slider-current-level" data-col="qa" aria-live="polite">Open and debug applications</div>
+        </div>
+      </div>
+      <div class="slider-track-wrap">
+        <div class="slider-range-col">
+          <input type="range" class="perm-level-range" data-col="prod" min="0" max="6" step="1" value="0" orient="vertical" aria-label="Production permission level" aria-valuetext="">
+        </div>
+        <div class="slider-current-track">
+          <div class="slider-current-level" data-col="prod" aria-live="polite">No access</div>
+        </div>
+      </div>
+
+      <div class="perm-row-label">Create applications <span class="info-icon" title="Allow creating new applications. Requires the permission level 'Change and Deploy Applications', or above.">i</span></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="create-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="create-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="create-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+
+      <div class="perm-row-label">Add system dependencies <span class="info-icon" title="Allow users who have this permission in their default role to add dependencies to public entities of System module. Available at Full control (on and locked), Change and deploy (on by default), or Open and debug through Access (optional checkbox).">i</span></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="deps-dev" data-col="dev" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="deps-qa" data-col="qa" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+      <div class="perm-check-cell perm-check-cell--env-slot"><label class="checkbox-wrap"><input type="checkbox" id="deps-prod" data-col="prod" data-standalone><span class="checkbox-box"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span></label></div>
+    </div>
+  </div>
+
+  <script>
+    const COLS = ['dev', 'qa', 'prod'];
+    const MIN_LEVEL_FOR_CREATE_APPS = 1;
+
+    const RANGE_LABELS = [
+      'No access',
+      'Access',
+      'List applications',
+      'Monitor and add dependencies',
+      'Open and debug applications',
+      'Change and deploy applications',
+      'Full control'
+    ];
+
+    function getSliderCheckboxes(col) {
+      return document.querySelectorAll(`#slider-body input[data-col="${col}"][data-level]`);
+    }
+
+    /** First checked permission row index 0–5, or -1 when none checked (No access). */
+    function getSliderLevel(col) {
+      const inputs = getSliderCheckboxes(col);
+      for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i].checked) return i;
+      }
+      return -1;
+    }
+
+    function setSliderLevel(col, level) {
+      const inputs = getSliderCheckboxes(col);
+      inputs.forEach((inp, i) => {
+        inp.checked = level >= 0 && i >= level;
+      });
+      updateCreateAppsState(col);
+      updateDepsState(col);
+      syncRangeFromState(col);
+    }
+
+    function setNoAccess(col, checked) {
+      if (checked) {
+        setSliderLevel(col, -1);
+        document.getElementById(`create-${col}`).checked = false;
+        document.getElementById(`deps-${col}`).checked = false;
+      }
+    }
+
+    function syncRangeFromState(col) {
+      const el = document.querySelector(`input.perm-level-range[data-col="${col}"]`);
+      if (!el) return;
+      const level = getSliderLevel(col);
+      const v = level === -1 ? 0 : 6 - level;
+      el.value = String(v);
+      const label = RANGE_LABELS[v];
+      el.setAttribute('aria-valuetext', label);
+      const display = document.querySelector(`.slider-current-level[data-col="${col}"]`);
+      if (display) {
+        display.textContent = label;
+        /* v=0 bottom … v=6 top — align label with thumb along 260px track */
+        const pctFromTop = ((6 - v) / 6) * 100;
+        display.style.top = `${pctFromTop}%`;
+      }
+    }
+
+    /** range 0 = No access, 1 = Access … 6 = Full control */
+    function applyRangeValue(col, rangeVal) {
+      const n = parseInt(rangeVal, 10);
+      if (n === 0) {
+        setNoAccess(col, true);
+      } else {
+        setSliderLevel(col, 6 - n);
+      }
+    }
+
+    function checkboxCell(el) {
+      return el.closest('.perm-check-cell') || el.closest('td');
+    }
+
+    const CREATE_APPS_DISABLED_TIP = "Requires \"Change and deploy applications\" or above.";
+    const FULL_CONTROL_LOCK_TIP = "These can only be toggled for the permission level 'Change and deploy'.";
+    function updateCreateAppsState(col) {
+      const level = getSliderLevel(col);
+      const createCheckbox = document.getElementById(`create-${col}`);
+      const cell = checkboxCell(createCheckbox);
+      if (level === -1 || level > MIN_LEVEL_FOR_CREATE_APPS) {
+        createCheckbox.disabled = true;
+        createCheckbox.checked = false;
+        if (cell) cell.title = CREATE_APPS_DISABLED_TIP;
+      } else if (level === 0) {
+        createCheckbox.disabled = true;
+        createCheckbox.checked = true;
+        if (cell) cell.title = FULL_CONTROL_LOCK_TIP;
+      } else if (level === 1) {
+        createCheckbox.disabled = false;
+        createCheckbox.checked = true;
+        if (cell) cell.title = '';
+      }
+    }
+
+    const DEPS_DISABLED_NO_ACCESS_TIP = "Requires access to this environment.";
+    function updateDepsState(col) {
+      const level = getSliderLevel(col);
+      const depsCheckbox = document.getElementById(`deps-${col}`);
+      const cell = checkboxCell(depsCheckbox);
+      if (level === -1) {
+        depsCheckbox.disabled = true;
+        depsCheckbox.checked = false;
+        if (cell) cell.title = DEPS_DISABLED_NO_ACCESS_TIP;
+      } else if (level === 0) {
+        depsCheckbox.disabled = true;
+        depsCheckbox.checked = true;
+        if (cell) cell.title = FULL_CONTROL_LOCK_TIP;
+      } else if (level === 1) {
+        depsCheckbox.disabled = false;
+        depsCheckbox.checked = true;
+        if (cell) cell.title = '';
+      } else if (level >= 2 && level <= 5) {
+        depsCheckbox.disabled = false;
+        depsCheckbox.checked = false;
+        if (cell) cell.title = '';
+      }
+    }
+
+    document.querySelectorAll('.perm-level-range').forEach((range) => {
+      range.addEventListener('input', () => {
+        applyRangeValue(range.dataset.col, range.value);
+      });
+      range.addEventListener('change', () => {
+        applyRangeValue(range.dataset.col, range.value);
+      });
+    });
+
+    document.querySelectorAll('input[data-standalone]').forEach((input) => {
+      input.addEventListener('change', () => {
+        if (!input.checked) return;
+        const col = input.dataset.col;
+        if (getSliderLevel(col) === -1) {
+          setSliderLevel(col, 1);
+        }
+      });
+    });
+
+    setSliderLevel('dev', 0);
+    document.getElementById('create-dev').checked = true;
+    setSliderLevel('qa', 2);
+    setSliderLevel('prod', -1);
+    COLS.forEach(updateCreateAppsState);
+    COLS.forEach(updateDepsState);
+    COLS.forEach(syncRangeFromState);
+  </script>
+</body>
+</html>
