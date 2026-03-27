@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O11 → ODC Permission Import Simulator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --border: #dde1e7;
+      --text: #1a1d23;
+      --text-muted: #6b7280;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --teal: #0d9488;
+      --teal-light: #ccfbf1;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --gray: #6b7280;
+      --gray-light: #f3f4f6;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    header .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-blue   { background: var(--blue-light);   color: var(--blue); }
+    .badge-teal   { background: var(--teal-light);   color: var(--teal); }
+    .badge-amber  { background: var(--amber-light);  color: var(--amber); }
+    .badge-green  { background: var(--green-light);  color: var(--green); }
+    .badge-gray   { background: var(--gray-light);   color: var(--gray); }
+    .badge-purple { background: var(--purple-light); color: var(--purple); }
+    .badge-red    { background: var(--red-light);    color: var(--red); }
+
+    .panels {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+      gap: 0;
+    }
+
+    .panel {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #panel-o11 {
+      background: #f8f9ff;
+      border-right: 2px solid var(--border);
+      max-width: 44%;
+    }
+
+    #panel-odc {
+      background: var(--bg);
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .infra-name-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .infra-name-bar label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    #infra-name {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border: none;
+      border-bottom: 2px solid var(--border);
+      border-radius: 0;
+      padding: 2px 4px;
+      background: transparent;
+    }
+
+    #infra-name:focus {
+      border-bottom-color: var(--blue);
+      box-shadow: none;
+      outline: none;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .card-header {
+      padding: 10px 14px;
+      background: var(--gray-light);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .card-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    button {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: white;
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: var(--gray-light); }
+    .btn-danger {
+      background: var(--red-light);
+      color: var(--red);
+      border-color: #fca5a5;
+    }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm { padding: 3px 8px; font-size: 11px; }
+
+    .role-row, .user-row, .assignment-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .role-row:last-child, .user-row:last-child, .assignment-row:last-child {
+      border-bottom: none;
+    }
+
+    .role-name {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    .user-email {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .user-block {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .user-block-header {
+      background: var(--gray-light);
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .user-block-body {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .assignment-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 1fr auto;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .odc-role-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .odc-role-item:last-child { border-bottom: none; }
+
+    .odc-role-name {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .odc-user-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .odc-user-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--gray-light);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .odc-user-body {
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .assignment-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .assignment-item .role-ref {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--teal);
+    }
+
+    .assignment-item .scope {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .audit-log {
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .audit-entry {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      line-height: 1.5;
+    }
+
+    .audit-entry::before {
+      content: '→';
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    details summary:hover { color: var(--text); }
+
+    .empty-state {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-style: italic;
+      padding: 8px 0;
+    }
+
+.divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    .note {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--amber-light);
+      border: 1px solid #fde68a;
+      border-radius: 5px;
+      padding: 6px 10px;
+      line-height: 1.5;
+    }
+
+    .warning-banner {
+      font-size: 11px;
+      color: var(--amber);
+      font-weight: 600;
+      background: var(--amber-light);
+      border: 1px solid #fde68a;
+      border-radius: 5px;
+      padding: 5px 10px;
+    }
+
+    @media (max-width: 900px) {
+      .panels { flex-direction: column; overflow: auto; }
+      #panel-o11 { max-width: 100%; border-right: none; border-bottom: 2px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>O11 → ODC Permission Import Simulator</h1>
+    <div class="subtitle">Define your O11 infrastructure, then see the resulting ODC state after applying import rules.</div>
+  </div>
+</header>
+
+<div class="panels">
+  <!-- LEFT: O11 Input -->
+  <section class="panel" id="panel-o11">
+    <div class="panel-title">
+      <span>⚙️</span> O11 Infrastructure Input
+    </div>
+
+    <!-- Infrastructure Name -->
+    <div class="infra-name-bar">
+      <label>Infrastructure</label>
+      <input type="text" id="infra-name" placeholder="e.g. Acme Platform" />
+    </div>
+
+    <!-- Roles -->
+    <div class="card">
+      <div class="card-header">
+        O11 Roles
+        <button class="btn-secondary btn-sm" onclick="addRole()">+ Add Role</button>
+      </div>
+      <div class="card-body" id="roles-list"></div>
+    </div>
+
+    <!-- Users -->
+    <div class="card">
+      <div class="card-header">
+        O11 Users
+        <button class="btn-secondary btn-sm" onclick="addUser()">+ Add User</button>
+      </div>
+      <div class="card-body" id="users-list"></div>
+    </div>
+
+    <!-- Pre-existing ODC Users -->
+    <div class="card">
+      <div class="card-header">
+        Pre-existing ODC Users
+        <button class="btn-secondary btn-sm" onclick="addExistingODCUser()">+ Add</button>
+      </div>
+      <div class="card-body">
+        <div class="note">Users already in ODC (matched by email). Import will skip creating them but will still assign O11 team &amp; app-level roles.</div>
+        <div id="existing-odc-list" style="margin-top:6px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: ODC Result -->
+  <section class="panel" id="panel-odc">
+    <div class="panel-title">
+      <span>☁️</span> Resulting ODC State
+    </div>
+    <div id="odc-output">
+      <div class="empty-state">Configure the O11 infrastructure on the left to see results.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // ─── Data Model ────────────────────────────────────────────────────────────
+
+  let state = {
+    infraName: '',
+    roles: [],       // { id, name, isBuiltIn }
+    users: [],       // { id, name, email, assignments: [{ roleId, level, scopeName }] }
+    existingODCUsers: [], // { email, orgRole }
+  };
+
+  let _nextId = 1;
+  function uid() { return 'id' + (_nextId++); }
+
+  // ─── Sample Data ───────────────────────────────────────────────────────────
+
+  function loadSampleData() {
+    const rDev = uid(), rAdmin = uid(), rFinMgr = uid(), rSalesViewer = uid();
+
+    const u1 = uid(), u2 = uid(), u3 = uid(), u4 = uid();
+
+    state = {
+      infraName: 'Acme Platform',
+      roles: [
+        { id: rDev,         name: 'Developer',      isBuiltIn: true },
+        { id: rAdmin,       name: 'Administrator',  isBuiltIn: true },
+        { id: rFinMgr,      name: 'FinanceManager', isBuiltIn: false },
+        { id: rSalesViewer, name: 'SalesViewer',    isBuiltIn: false },
+      ],
+      users: [
+        {
+          id: u1, name: 'Alice Smith', email: 'alice@acme.com',
+          assignments: [
+            { id: uid(), roleId: rDev,    level: 'default', scopeName: '' },
+            { id: uid(), roleId: rFinMgr, level: 'team',    scopeName: 'Finance' },
+          ]
+        },
+        {
+          id: u2, name: 'Bob Jones', email: 'bob@acme.com',
+          assignments: [
+            { id: uid(), roleId: rAdmin,       level: 'default', scopeName: '' },
+            { id: uid(), roleId: rSalesViewer, level: 'app',     scopeName: 'SalesApp' },
+          ]
+        },
+        {
+          id: u3, name: 'Carol Davis', email: 'carol@acme.com',
+          assignments: [
+            { id: uid(), roleId: rDev, level: 'default', scopeName: '' },
+            { id: uid(), roleId: rDev, level: 'team',    scopeName: 'DevTeam' },
+          ]
+        },
+        {
+          id: u4, name: 'Dave Wilson', email: 'dave@acme.com',
+          assignments: [
+            { id: uid(), roleId: rSalesViewer, level: 'default', scopeName: '' },
+          ]
+        },
+      ],
+      existingODCUsers: [
+        { id: uid(), email: 'bob@acme.com',  orgRole: 'ITManager' },
+        { id: uid(), email: 'eve@acme.com',  orgRole: 'Administrator' },
+      ],
+    };
+  }
+
+  // ─── Simulation Engine ─────────────────────────────────────────────────────
+
+  function simulate(s) {
+    const audit = [];
+    const infraName = s.infraName.trim() || '(unnamed)';
+
+    // Step 1: ODC built-in roles
+    const odcRoles = [
+      { id: 'odc-admin', name: 'Administrator', isBuiltIn: true, source: null },
+      { id: 'odc-dev',   name: 'Developer',     isBuiltIn: true, source: null },
+    ];
+    audit.push(`ODC built-in Administrator role always exists and gains full control permissions for the "${infraName}" O11 portfolio.`);
+    audit.push(`ODC built-in Developer role always exists with developer-level permissions.`);
+
+    // Step 2: Derive custom ODC roles from all O11 roles
+    const roleMap = {}; // o11RoleId -> odcRoleId
+    for (const r of s.roles) {
+      const odcRoleId = uid();
+      const odcRoleName = `${r.name} (${infraName})`;
+      odcRoles.push({ id: odcRoleId, name: odcRoleName, isBuiltIn: false, source: r.name, isBuiltInO11: r.isBuiltIn });
+      roleMap[r.id] = odcRoleId;
+      if (r.isBuiltIn) {
+        audit.push(`O11 built-in role "${r.name}" imported as custom ODC role "${odcRoleName}" with its environment-level permissions.`);
+      } else {
+        audit.push(`O11 custom role "${r.name}" imported as custom ODC role "${odcRoleName}" with its environment-level permissions.`);
+      }
+    }
+
+    // Index existing ODC users by email
+    const existingByEmail = {};
+    for (const u of s.existingODCUsers) {
+      existingByEmail[u.email.trim().toLowerCase()] = u;
+    }
+
+    // Step 3 & 4: Resolve users and map assignments
+    const odcUsers = [];
+    const odcAssignments = []; // { userEmail, roleId (ODC), roleName (ODC), level, scopeName }
+
+    for (const u of s.users) {
+      const emailKey = u.email.trim().toLowerCase();
+      const existing = existingByEmail[emailKey];
+      const isPreExisting = !!existing;
+
+      // Find default-level assignment to determine the user's ODC org role
+      const defaultAssignment = u.assignments.find(a => a.level === 'default');
+      let odcOrgRole = null;
+
+      if (isPreExisting) {
+        odcOrgRole = existing.orgRole; // kept as-is
+        audit.push(`User "${u.email}" already exists in ODC with org role "${existing.orgRole}". Skipping user creation; keeping existing org role.`);
+      } else {
+        if (defaultAssignment && roleMap[defaultAssignment.roleId]) {
+          const mappedODCRole = odcRoles.find(r => r.id === roleMap[defaultAssignment.roleId]);
+          odcOrgRole = mappedODCRole ? mappedODCRole.name : null;
+        }
+        audit.push(`User "${u.email}" is new to ODC. Creating user with org role "${odcOrgRole || '(none)'}". An email invite will be sent to this user.`);
+      }
+
+      odcUsers.push({
+        email: u.email,
+        name: u.name,
+        isPreExisting,
+        odcOrgRole,
+        existingODCOrgRole: isPreExisting ? existing.orgRole : null,
+      });
+
+      // Map team/app-level assignments to ODC (default-level becomes the org role, not a separate assignment)
+      for (const a of u.assignments) {
+        const odcRoleId = roleMap[a.roleId];
+        if (!odcRoleId) continue;
+        const odcRole = odcRoles.find(r => r.id === odcRoleId);
+        if (!odcRole) continue;
+
+        if (a.level === 'default') {
+          if (isPreExisting) {
+            audit.push(`Pre-existing ODC user "${u.email}": O11 default role maps to ODC org role, but existing org role "${existing.orgRole}" is kept as-is.`);
+          } else {
+            audit.push(`User "${u.email}": O11 default role "${odcRole.name}" → ODC org role (not a separate assignment).`);
+          }
+          continue; // default level = org role only, no explicit assignment
+        }
+
+        odcAssignments.push({
+          userEmail: u.email,
+          roleId: odcRoleId,
+          roleName: odcRole.name,
+          level: a.level,
+          scopeName: a.scopeName || '',
+        });
+
+        audit.push(`${isPreExisting ? 'Pre-existing ODC' : 'New'} user "${u.email}": O11 ${a.level}-level role → ODC role "${odcRole.name}" at ${a.level} "${a.scopeName}".`);
+      }
+    }
+
+    // ODC built-in admin note
+    audit.push(`Any ODC user with the built-in Administrator role gains full permissions for the "${infraName}" portfolio automatically (no explicit assignment needed).`);
+
+    return { odcRoles, odcUsers, odcAssignments, audit, infraName };
+  }
+
+  // ─── Render: Left Panel ────────────────────────────────────────────────────
+
+  function renderRoles() {
+    const el = document.getElementById('roles-list');
+    if (state.roles.length === 0) {
+      el.innerHTML = '<div class="empty-state">No roles defined. Add roles above.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    for (const role of state.roles) {
+      const row = document.createElement('div');
+      row.className = 'role-row';
+      row.innerHTML = `
+        <span class="role-name">${escHtml(role.name)}</span>
+        ${role.isBuiltIn
+          ? '<span class="badge badge-blue">built-in</span>'
+          : '<span class="badge badge-teal">custom</span>'}
+        ${role.isBuiltIn
+          ? `<button class="btn-secondary btn-sm" disabled title="Built-in roles cannot be removed" style="opacity:0.4">✕</button>`
+          : `<button class="btn-danger btn-sm" onclick="removeRole('${role.id}')">✕</button>`}
+      `;
+      el.appendChild(row);
+    }
+  }
+
+  function addRole() {
+    const name = prompt('Role name:');
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim();
+    if (state.roles.find(r => r.name.toLowerCase() === trimmed.toLowerCase())) {
+      alert('A role with that name already exists.');
+      return;
+    }
+    state.roles.push({ id: uid(), name: trimmed, isBuiltIn: false });
+    refresh();
+  }
+
+  function removeRole(id) {
+    // Remove from roles
+    state.roles = state.roles.filter(r => r.id !== id);
+    // Remove assignments referencing this role
+    for (const u of state.users) {
+      u.assignments = u.assignments.filter(a => a.roleId !== id);
+    }
+    refresh();
+  }
+
+  function renderUsers() {
+    const el = document.getElementById('users-list');
+    if (state.users.length === 0) {
+      el.innerHTML = '<div class="empty-state">No users defined. Add users above.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    for (const user of state.users) {
+      const block = document.createElement('div');
+      block.className = 'user-block';
+
+      const roleOptions = state.roles.map(r =>
+        `<option value="${r.id}">${escHtml(r.name)}${r.isBuiltIn ? ' ★' : ''}</option>`
+      ).join('');
+
+      const assignmentRows = user.assignments.map(a => `
+        <div class="assignment-row">
+          <select onchange="updateAssignmentLevel('${user.id}','${a.id}',this.value)">
+            <option value="default" ${a.level==='default'?'selected':''}>default</option>
+            <option value="team"    ${a.level==='team'?'selected':''}>team</option>
+            <option value="app"     ${a.level==='app'?'selected':''}>app</option>
+          </select>
+          <select onchange="updateAssignmentRole('${user.id}','${a.id}',this.value)">
+            ${state.roles.map(r => `<option value="${r.id}" ${r.id===a.roleId?'selected':''}>${escHtml(r.name)}${r.isBuiltIn?' ★':''}</option>`).join('')}
+          </select>
+          <input type="text" placeholder="${a.level === 'default' ? '(n/a)' : 'name...'}"
+            value="${escHtml(a.scopeName || '')}"
+            ${a.level === 'default' ? 'disabled style="opacity:0.4"' : ''}
+            onchange="updateAssignmentScope('${user.id}','${a.id}',this.value)" />
+          <button class="btn-danger btn-sm" onclick="removeAssignment('${user.id}','${a.id}')">✕</button>
+        </div>
+      `).join('');
+
+      block.innerHTML = `
+        <div class="user-block-header">
+          <div>
+            <div class="user-email">${escHtml(user.email)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${escHtml(user.name)}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn-secondary btn-sm" onclick="addAssignment('${user.id}')">+ Assignment</button>
+            <button class="btn-danger btn-sm" onclick="removeUser('${user.id}')">Remove</button>
+          </div>
+        </div>
+        <div class="user-block-body">
+          <div style="display:grid;grid-template-columns:90px 1fr 1fr auto;gap:6px;font-size:11px;font-weight:600;color:var(--text-muted);padding:0 0 2px 0">
+            <span>Level</span><span>Role</span><span>Scope name</span><span></span>
+          </div>
+          ${assignmentRows || '<div class="empty-state">No assignments. Click "+ Assignment" to add one.</div>'}
+        </div>
+      `;
+      el.appendChild(block);
+    }
+  }
+
+  function addUser() {
+    const email = prompt('User email:');
+    if (!email || !email.trim()) return;
+    const emailKey = email.trim().toLowerCase();
+    if (state.users.find(u => u.email.trim().toLowerCase() === emailKey)) {
+      alert('A user with that email already exists.');
+      return;
+    }
+    const name = prompt('User display name:') || email;
+    state.users.push({ id: uid(), email: email.trim(), name: name.trim(), assignments: [] });
+    refresh();
+  }
+
+  function removeUser(id) {
+    state.users = state.users.filter(u => u.id !== id);
+    refresh();
+  }
+
+  function addAssignment(userId) {
+    const user = state.users.find(u => u.id === userId);
+    if (!user) return;
+    if (state.roles.length === 0) { alert('Add at least one role first.'); return; }
+    user.assignments.push({ id: uid(), roleId: state.roles[0].id, level: 'default', scopeName: '' });
+    refresh();
+  }
+
+  function removeAssignment(userId, assignId) {
+    const user = state.users.find(u => u.id === userId);
+    if (!user) return;
+    user.assignments = user.assignments.filter(a => a.id !== assignId);
+    refresh();
+  }
+
+  function updateAssignmentLevel(userId, assignId, value) {
+    const user = state.users.find(u => u.id === userId);
+    const a = user && user.assignments.find(a => a.id === assignId);
+    if (a) { a.level = value; if (value === 'default') a.scopeName = ''; }
+    refresh();
+  }
+
+  function updateAssignmentRole(userId, assignId, value) {
+    const user = state.users.find(u => u.id === userId);
+    const a = user && user.assignments.find(a => a.id === assignId);
+    if (a) a.roleId = value;
+    refresh();
+  }
+
+  function updateAssignmentScope(userId, assignId, value) {
+    const user = state.users.find(u => u.id === userId);
+    const a = user && user.assignments.find(a => a.id === assignId);
+    if (a) a.scopeName = value;
+    refresh();
+  }
+
+  function renderExistingODCUsers() {
+    const el = document.getElementById('existing-odc-list');
+    if (state.existingODCUsers.length === 0) {
+      el.innerHTML = '<div class="empty-state">No pre-existing ODC users defined.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    for (const u of state.existingODCUsers) {
+      const row = document.createElement('div');
+      row.className = 'role-row';
+      row.innerHTML = `
+        <span class="role-name">${escHtml(u.email)}</span>
+        <span class="badge badge-amber">ODC: ${escHtml(u.orgRole)}</span>
+        <button class="btn-danger btn-sm" onclick="removeExistingODCUser('${u.id}')">✕</button>
+      `;
+      el.appendChild(row);
+    }
+  }
+
+  function addExistingODCUser() {
+    const email = prompt('Existing ODC user email:');
+    if (!email || !email.trim()) return;
+    const emailKey = email.trim().toLowerCase();
+    if (state.existingODCUsers.find(u => u.email.trim().toLowerCase() === emailKey)) {
+      alert('Already listed.'); return;
+    }
+    const orgRole = prompt('Their current ODC org role (e.g. Administrator, ITManager):') || 'Member';
+    state.existingODCUsers.push({ id: uid(), email: email.trim(), orgRole: orgRole.trim() });
+    refresh();
+  }
+
+  function removeExistingODCUser(id) {
+    state.existingODCUsers = state.existingODCUsers.filter(u => u.id !== id);
+    refresh();
+  }
+
+  // ─── Render: Right Panel ───────────────────────────────────────────────────
+
+  function renderODCOutput(result) {
+    const el = document.getElementById('odc-output');
+    el.innerHTML = '';
+
+    // ── ODC Roles ──
+    const rolesCard = document.createElement('div');
+    rolesCard.className = 'card';
+    rolesCard.innerHTML = `<div class="card-header">ODC Roles <span class="badge badge-gray">${result.odcRoles.length}</span></div>`;
+    const rolesBody = document.createElement('div');
+    rolesBody.className = 'card-body';
+
+    for (const r of result.odcRoles) {
+      const item = document.createElement('div');
+      item.className = 'odc-role-item';
+      item.innerHTML = `
+        <span class="odc-role-name">${escHtml(r.name)}</span>
+        ${r.isBuiltIn
+          ? '<span class="badge badge-blue">built-in ODC</span>'
+          : `<span class="badge badge-teal">custom</span>`}
+        ${r.isBuiltInO11 ? '<span class="badge badge-purple">from O11 built-in</span>' : ''}
+        ${r.source && !r.isBuiltIn ? `<span style="font-size:11px;color:var(--text-muted)">← ${escHtml(r.source)}</span>` : ''}
+      `;
+      rolesBody.appendChild(item);
+    }
+    rolesCard.appendChild(rolesBody);
+    el.appendChild(rolesCard);
+
+    // ── ODC Users ──
+    const usersCard = document.createElement('div');
+    usersCard.className = 'card';
+    usersCard.innerHTML = `<div class="card-header">ODC Users <span class="badge badge-gray">${result.odcUsers.length}</span></div>`;
+    const usersBody = document.createElement('div');
+    usersBody.className = 'card-body';
+
+    if (result.odcUsers.length === 0) {
+      usersBody.innerHTML = '<div class="empty-state">No users to display.</div>';
+    }
+
+    for (const u of result.odcUsers) {
+      const userAssignments = result.odcAssignments.filter(a => a.userEmail === u.email);
+
+      const userCard = document.createElement('div');
+      userCard.className = 'odc-user-card';
+
+      const headerBg = u.isPreExisting ? 'background: #fffbeb;' : 'background: #f0fdf4;';
+
+      userCard.innerHTML = `
+        <div class="odc-user-header" style="${headerBg}">
+          <div style="flex:1">
+            <div class="user-email">${escHtml(u.email)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${escHtml(u.name)}</div>
+          </div>
+          ${u.isPreExisting
+            ? `<span class="badge badge-amber">pre-existing</span>`
+            : `<span class="badge badge-green">new</span>`}
+        </div>
+        <div class="odc-user-body">
+          <div class="assignment-item">
+            <span class="badge badge-gray">org role</span>
+            <span class="role-ref">${escHtml(u.odcOrgRole || '(none)')}</span>
+            ${u.isPreExisting ? `<span class="scope">kept as-is (pre-existing)</span>` : ''}
+          </div>
+          ${userAssignments.map(a => {
+            const levelBadge = a.level === 'team'
+              ? '<span class="badge badge-purple">team</span>'
+              : '<span class="badge badge-blue">app</span>';
+            const scopePart = a.scopeName
+              ? `<span class="scope">→ ${escHtml(a.scopeName)}</span>`
+              : '';
+            return `
+              <div class="assignment-item">
+                ${levelBadge}
+                <span class="role-ref">${escHtml(a.roleName)}</span>
+                ${scopePart}
+              </div>`;
+          }).join('')}
+          ${userAssignments.length === 0 ? '<div class="empty-state">No role assignments.</div>' : ''}
+        </div>
+      `;
+      usersBody.appendChild(userCard);
+    }
+
+    // Show existing ODC users not in O11
+    const o11Emails = new Set(result.odcUsers.map(u => u.email.trim().toLowerCase()));
+    const onlyInODC = state.existingODCUsers.filter(u => !o11Emails.has(u.email.trim().toLowerCase()));
+    for (const u of onlyInODC) {
+      const userCard = document.createElement('div');
+      userCard.className = 'odc-user-card';
+      userCard.innerHTML = `
+        <div class="odc-user-header" style="background:#fffbeb;">
+          <div style="flex:1">
+            <div class="user-email">${escHtml(u.email)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">Pre-existing ODC user (not in O11)</div>
+          </div>
+          <span class="badge badge-amber">pre-existing</span>
+        </div>
+        <div class="odc-user-body">
+          <div class="assignment-item">
+            <span class="badge badge-gray">org role</span>
+            <span class="role-ref">${escHtml(u.orgRole)}</span>
+            <span class="scope">unchanged — not in O11</span>
+          </div>
+        </div>
+      `;
+      usersBody.appendChild(userCard);
+    }
+
+    usersCard.appendChild(usersBody);
+    el.appendChild(usersCard);
+
+    // ── ODC Administrator note ──
+    const adminNote = document.createElement('div');
+    adminNote.className = 'note';
+    adminNote.innerHTML = `<strong>Built-in ODC Administrator:</strong> Any ODC user with the built-in <em>Administrator</em> org role automatically gains full control permissions for the "<strong>${escHtml(result.infraName)}</strong>" O11 portfolio (create apps, add system dependencies, all environment access). No explicit assignment is needed.`;
+    el.appendChild(adminNote);
+
+    // ── Audit Log ──
+    const auditCard = document.createElement('div');
+    auditCard.className = 'card';
+    const auditDetails = document.createElement('details');
+    auditDetails.innerHTML = `<summary style="padding:10px 14px;">Rule Audit Log <span class="badge badge-gray">${result.audit.length} entries</span></summary>`;
+    const auditBody = document.createElement('div');
+    auditBody.className = 'card-body';
+    const auditLog = document.createElement('div');
+    auditLog.className = 'audit-log';
+    for (const entry of result.audit) {
+      const d = document.createElement('div');
+      d.className = 'audit-entry';
+      d.textContent = entry;
+      auditLog.appendChild(d);
+    }
+    auditBody.appendChild(auditLog);
+    auditDetails.appendChild(auditBody);
+    auditCard.appendChild(auditDetails);
+    el.appendChild(auditCard);
+  }
+
+  // ─── Refresh ───────────────────────────────────────────────────────────────
+
+  function refresh() {
+    // Sync infra name from input
+    state.infraName = document.getElementById('infra-name').value;
+
+    renderRoles();
+    renderUsers();
+    renderExistingODCUsers();
+
+    if (!state.infraName.trim()) {
+      document.getElementById('odc-output').innerHTML =
+        '<div class="empty-state">Enter an infrastructure name to see the simulation results.</div>';
+      return;
+    }
+
+    const result = simulate(state);
+    renderODCOutput(result);
+  }
+
+  // ─── Utilities ─────────────────────────────────────────────────────────────
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Bootstrap ─────────────────────────────────────────────────────────────
+
+  loadSampleData();
+
+  // Wire up infra name input
+  document.getElementById('infra-name').addEventListener('input', refresh);
+
+  // Initial render with sample data
+  document.getElementById('infra-name').value = state.infraName;
+  refresh();
+</script>
+</body>
+</html>
