@@ -537,6 +537,22 @@
       flex: 1;
     }
     .odc-perms-flags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .odc-perms-portfolio-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2px;
+    }
+    .odc-perms-portfolio-label strong {
+      color: var(--teal);
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 700;
+    }
     .odc-infra-skip {
       font-size: 11px;
       color: var(--amber);
@@ -1211,10 +1227,17 @@
         }).join('');
 
         summary.innerHTML = `
+          <div class="odc-perms-portfolio-label">Permissions for portfolio: <strong>${escHtml(result.infraName)}</strong></div>
           ${envRows}
           <div class="odc-infra-skip">⚠ Infrastructure-wide permissions not propagated</div>
         `;
         item.appendChild(summary);
+
+        const otherPermsNote = document.createElement('div');
+        otherPermsNote.className = 'odc-infra-skip';
+        otherPermsNote.style.cssText = 'margin-top:4px;';
+        otherPermsNote.textContent = '⚠ Organization permissions and other portfolio permissions are not set';
+        item.appendChild(otherPermsNote);
       }
 
       rolesBody.appendChild(item);
