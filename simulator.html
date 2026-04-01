@@ -419,6 +419,130 @@
       .panels { flex-direction: column; overflow: auto; }
       #panel-o11 { max-width: 100%; border-right: none; border-bottom: 2px solid var(--border); }
     }
+
+    /* ── Permissions toggle ── */
+    .perms-toggle {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--blue);
+      background: var(--blue-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 5px;
+      padding: 2px 8px;
+      cursor: pointer;
+      margin-left: auto;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .perms-toggle:hover { background: #bfdbfe; }
+
+    /* ── Permissions panel ── */
+    .perms-panel {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      background: #f8faff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 0 0 4px 0;
+    }
+    .perms-panel.open { display: flex; }
+
+    /* ── Permissions grid ── */
+    .perms-grid {
+      display: grid;
+      grid-template-columns: 72px 1fr 72px 82px;
+      gap: 4px 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .perms-grid .ph {
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .perms-grid .ph.center { text-align: center; }
+    .perms-grid .env-label { font-weight: 600; color: var(--text); }
+    .perms-grid select { font-size: 12px; padding: 3px 6px; width: 100%; min-width: 0; }
+    .perms-grid select:disabled { opacity: 0.5; cursor: not-allowed; }
+    .perms-grid .cb-cell { display: flex; justify-content: center; }
+    .perms-grid .cb-cell input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; }
+    .perms-grid .cb-cell input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    /* ── Infra-wide section ── */
+    .perms-infra {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .perms-infra-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .perms-infra-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .perms-infra-row input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+    .perms-infra-row input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+    .perms-infra-note {
+      font-size: 11px;
+      color: var(--amber);
+      background: var(--amber-light);
+      border: 1px solid #fde68a;
+      border-radius: 4px;
+      padding: 3px 8px;
+      margin-top: 2px;
+    }
+
+    /* ── ODC permissions summary ── */
+    .odc-perms-summary {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 6px 8px;
+      background: var(--gray-light);
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+    .odc-perms-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .odc-perms-env {
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 64px;
+      flex-shrink: 0;
+    }
+    .odc-perms-level {
+      font-size: 11px;
+      color: var(--text);
+      flex: 1;
+    }
+    .odc-perms-flags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .odc-infra-skip {
+      font-size: 11px;
+      color: var(--amber);
+      font-style: italic;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -490,13 +614,64 @@
 
   let state = {
     infraName: '',
-    roles: [],       // { id, name, isBuiltIn }
+    roles: [],       // { id, name, isBuiltIn, permissions }
     users: [],       // { id, name, email, assignments: [{ roleId, level, scopeName }] }
     existingODCUsers: [], // { email, orgRole }
   };
 
   let _nextId = 1;
   function uid() { return 'id' + (_nextId++); }
+
+  // ─── Permission Model ──────────────────────────────────────────────────────
+
+  const PERM_LEVELS = [
+    'No Access',
+    'Access',
+    'List Applications',
+    'Monitor and Add Dependencies',
+    'Open and Debug Applications',
+    'Change and Deploy Applications',
+    'Full Control',
+  ];
+
+  const PERM_ENVS = ['Dev', 'QA', 'Production'];
+
+  function defaultPermissions(roleType) {
+    const ep = (level, createApplications, addSystemDependencies) =>
+      ({ level, createApplications, addSystemDependencies });
+    if (roleType === 'admin') {
+      return {
+        environments: {
+          Dev:        ep('Full Control', true,  true),
+          QA:         ep('Full Control', true,  true),
+          Production: ep('Full Control', true,  true),
+        },
+        manageUsersAndRoles: true,
+        manageTeamsAndApplicationRoles: true,
+      };
+    }
+    if (roleType === 'developer') {
+      return {
+        environments: {
+          Dev:        ep('Full Control',                    true,  false),
+          QA:         ep('Change and Deploy Applications',  false, false),
+          Production: ep('Open and Debug Applications',     false, false),
+        },
+        manageUsersAndRoles: false,
+        manageTeamsAndApplicationRoles: false,
+      };
+    }
+    // custom
+    return {
+      environments: {
+        Dev:        ep('No Access', false, false),
+        QA:         ep('No Access', false, false),
+        Production: ep('No Access', false, false),
+      },
+      manageUsersAndRoles: false,
+      manageTeamsAndApplicationRoles: false,
+    };
+  }
 
   // ─── Sample Data ───────────────────────────────────────────────────────────
 
@@ -508,24 +683,40 @@
     state = {
       infraName: 'Acme Platform',
       roles: [
-        { id: rDev,         name: 'Developer',      isBuiltIn: true },
-        { id: rAdmin,       name: 'Administrator',  isBuiltIn: true },
-        { id: rFinMgr,      name: 'FinanceManager', isBuiltIn: false },
-        { id: rSalesViewer, name: 'SalesViewer',    isBuiltIn: false },
+        { id: rDev,         name: 'Developer',      isBuiltIn: true,  permissions: defaultPermissions('developer') },
+        { id: rAdmin,       name: 'Administrator',  isBuiltIn: true,  permissions: defaultPermissions('admin')     },
+        { id: rFinMgr,      name: 'ReleaseManager', isBuiltIn: false, permissions: {
+            environments: {
+              Dev:        { level: 'List Applications', createApplications: false, addSystemDependencies: false },
+              QA:         { level: 'List Applications', createApplications: false, addSystemDependencies: false },
+              Production: { level: 'Full Control',      createApplications: false, addSystemDependencies: false },
+            },
+            manageUsersAndRoles: false,
+            manageTeamsAndApplicationRoles: false,
+          }},
+        { id: rSalesViewer, name: 'QAReviewer',     isBuiltIn: false, permissions: {
+            environments: {
+              Dev:        { level: 'Open and Debug Applications', createApplications: false, addSystemDependencies: false },
+              QA:         { level: 'Open and Debug Applications', createApplications: false, addSystemDependencies: false },
+              Production: { level: 'Open and Debug Applications', createApplications: false, addSystemDependencies: false },
+            },
+            manageUsersAndRoles: false,
+            manageTeamsAndApplicationRoles: false,
+          }},
       ],
       users: [
         {
           id: u1, name: 'Alice Smith', email: 'alice@acme.com',
           assignments: [
             { id: uid(), roleId: rDev,    level: 'default', scopeName: '' },
-            { id: uid(), roleId: rFinMgr, level: 'team',    scopeName: 'Finance' },
+            { id: uid(), roleId: rFinMgr, level: 'team',    scopeName: 'Platform Team' },
           ]
         },
         {
           id: u2, name: 'Bob Jones', email: 'bob@acme.com',
           assignments: [
             { id: uid(), roleId: rAdmin,       level: 'default', scopeName: '' },
-            { id: uid(), roleId: rSalesViewer, level: 'app',     scopeName: 'SalesApp' },
+            { id: uid(), roleId: rSalesViewer, level: 'app',     scopeName: 'OnboardingApp' },
           ]
         },
         {
@@ -568,8 +759,30 @@
     for (const r of s.roles) {
       const odcRoleId = uid();
       const odcRoleName = `${r.name} (${infraName})`;
-      odcRoles.push({ id: odcRoleId, name: odcRoleName, isBuiltIn: false, source: r.name, isBuiltInO11: r.isBuiltIn });
+
+      // Copy only env-level permissions to ODC; infra-wide permissions are explicitly excluded
+      let odcPermissions = null;
+      if (r.permissions) {
+        odcPermissions = {
+          environments: {
+            Dev:        { ...r.permissions.environments.Dev },
+            QA:         { ...r.permissions.environments.QA },
+            Production: { ...r.permissions.environments.Production },
+          },
+          // manageUsersAndRoles and manageTeamsAndApplicationRoles intentionally omitted
+        };
+
+        if (r.permissions.manageUsersAndRoles) {
+          audit.push(`Role "${r.name}": "Manage Users & Roles" is infrastructure-wide and is NOT propagated to ODC role "${odcRoleName}".`);
+        }
+        if (r.permissions.manageTeamsAndApplicationRoles) {
+          audit.push(`Role "${r.name}": "Manage Teams & Application Roles" is infrastructure-wide and is NOT propagated to ODC role "${odcRoleName}".`);
+        }
+      }
+
+      odcRoles.push({ id: odcRoleId, name: odcRoleName, isBuiltIn: false, source: r.name, isBuiltInO11: r.isBuiltIn, permissions: odcPermissions });
       roleMap[r.id] = odcRoleId;
+
       if (r.isBuiltIn) {
         audit.push(`O11 built-in role "${r.name}" imported as custom ODC role "${odcRoleName}" with its environment-level permissions.`);
       } else {
@@ -657,20 +870,104 @@
       el.innerHTML = '<div class="empty-state">No roles defined. Add roles above.</div>';
       return;
     }
+
+    // Preserve which panels are currently open across re-renders
+    const openIds = new Set(
+      [...el.querySelectorAll('.perms-panel.open')].map(p => p.dataset.roleId)
+    );
+
     el.innerHTML = '';
+
     for (const role of state.roles) {
+      const isAdmin = role.isBuiltIn && role.name === 'Administrator';
+      const readOnly = isAdmin;
+      const p = role.permissions;
+
+      // Outer wrapper (role-row + perms-panel stacked)
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;flex-direction:column;border-bottom:1px solid #f3f4f6;';
+
+      // Role row
       const row = document.createElement('div');
       row.className = 'role-row';
+      row.style.borderBottom = 'none';
       row.innerHTML = `
         <span class="role-name">${escHtml(role.name)}</span>
         ${role.isBuiltIn
           ? '<span class="badge badge-blue">built-in</span>'
           : '<span class="badge badge-teal">custom</span>'}
+        <button class="perms-toggle" onclick="toggleRolePerms('${role.id}')">
+          ${readOnly ? '🔒 Permissions' : '⚙ Permissions'}
+        </button>
         ${role.isBuiltIn
           ? `<button class="btn-secondary btn-sm" disabled title="Built-in roles cannot be removed" style="opacity:0.4">✕</button>`
           : `<button class="btn-danger btn-sm" onclick="removeRole('${role.id}')">✕</button>`}
       `;
-      el.appendChild(row);
+
+      // Permissions panel
+      const panel = document.createElement('div');
+      panel.className = 'perms-panel' + (openIds.has(role.id) ? ' open' : '');
+      panel.id = 'perms-panel-' + role.id;
+      panel.dataset.roleId = role.id;
+
+      if (p) {
+        const dis = readOnly ? 'disabled' : '';
+
+        const levelOptions = (currentLevel) =>
+          PERM_LEVELS.map(l =>
+            `<option value="${escHtml(l)}" ${l === currentLevel ? 'selected' : ''}>${escHtml(l)}</option>`
+          ).join('');
+
+        const gridRows = PERM_ENVS.map(env => {
+          const ep = p.environments[env];
+          return `
+            <span class="env-label">${env}</span>
+            <select ${dis} onchange="setRoleEnvLevel('${role.id}','${env}',this.value)">
+              ${levelOptions(ep.level)}
+            </select>
+            <div class="cb-cell">
+              <input type="checkbox" ${dis} ${ep.createApplications ? 'checked' : ''}
+                title="Create Applications"
+                onchange="setRoleEnvBool('${role.id}','${env}','createApplications',this.checked)" />
+            </div>
+            <div class="cb-cell">
+              <input type="checkbox" ${dis} ${ep.addSystemDependencies ? 'checked' : ''}
+                title="Add System Dependencies"
+                onchange="setRoleEnvBool('${role.id}','${env}','addSystemDependencies',this.checked)" />
+            </div>
+          `;
+        }).join('');
+
+        panel.innerHTML = `
+          <div class="perms-grid">
+            <span class="ph">Env</span>
+            <span class="ph">Level</span>
+            <span class="ph center">Create Apps</span>
+            <span class="ph center">Add Sys Deps</span>
+            ${gridRows}
+          </div>
+          <div class="perms-infra">
+            <div class="perms-infra-title">Infrastructure-wide</div>
+            <div class="perms-infra-row">
+              <input type="checkbox" ${dis} ${p.manageUsersAndRoles ? 'checked' : ''}
+                onchange="setRoleInfraBool('${role.id}','manageUsersAndRoles',this.checked)" />
+              <span>Manage Users &amp; Roles</span>
+            </div>
+            <div class="perms-infra-row">
+              <input type="checkbox" ${dis} ${p.manageTeamsAndApplicationRoles ? 'checked' : ''}
+                onchange="setRoleInfraBool('${role.id}','manageTeamsAndApplicationRoles',this.checked)" />
+              <span>Manage Teams &amp; Application Roles</span>
+            </div>
+            <div class="perms-infra-note">
+              ⚠ Infrastructure-wide permissions are <strong>not propagated</strong> to ODC roles.
+            </div>
+          </div>
+        `;
+      }
+
+      wrapper.appendChild(row);
+      wrapper.appendChild(panel);
+      el.appendChild(wrapper);
     }
   }
 
@@ -682,7 +979,7 @@
       alert('A role with that name already exists.');
       return;
     }
-    state.roles.push({ id: uid(), name: trimmed, isBuiltIn: false });
+    state.roles.push({ id: uid(), name: trimmed, isBuiltIn: false, permissions: defaultPermissions('custom') });
     refresh();
   }
 
@@ -693,6 +990,28 @@
     for (const u of state.users) {
       u.assignments = u.assignments.filter(a => a.roleId !== id);
     }
+    refresh();
+  }
+
+  function toggleRolePerms(id) {
+    document.getElementById('perms-panel-' + id)?.classList.toggle('open');
+  }
+
+  function setRoleEnvLevel(roleId, env, value) {
+    const r = state.roles.find(r => r.id === roleId);
+    if (r?.permissions?.environments[env]) r.permissions.environments[env].level = value;
+    refresh();
+  }
+
+  function setRoleEnvBool(roleId, env, field, checked) {
+    const r = state.roles.find(r => r.id === roleId);
+    if (r?.permissions?.environments[env]) r.permissions.environments[env][field] = checked;
+    refresh();
+  }
+
+  function setRoleInfraBool(roleId, field, checked) {
+    const r = state.roles.find(r => r.id === roleId);
+    if (r?.permissions) r.permissions[field] = checked;
     refresh();
   }
 
@@ -857,14 +1176,47 @@
     for (const r of result.odcRoles) {
       const item = document.createElement('div');
       item.className = 'odc-role-item';
-      item.innerHTML = `
+      item.style.cssText = 'flex-direction:column; align-items:flex-start;';
+
+      // Badges row
+      const badgeRow = document.createElement('div');
+      badgeRow.style.cssText = 'display:flex; align-items:center; gap:8px; width:100%; flex-wrap:wrap;';
+      badgeRow.innerHTML = `
         <span class="odc-role-name">${escHtml(r.name)}</span>
         ${r.isBuiltIn
           ? '<span class="badge badge-blue">built-in ODC</span>'
-          : `<span class="badge badge-teal">custom</span>`}
+          : '<span class="badge badge-teal">custom</span>'}
         ${r.isBuiltInO11 ? '<span class="badge badge-purple">from O11 built-in</span>' : ''}
         ${r.source && !r.isBuiltIn ? `<span style="font-size:11px;color:var(--text-muted)">← ${escHtml(r.source)}</span>` : ''}
       `;
+      item.appendChild(badgeRow);
+
+      // Permissions summary for custom ODC roles
+      if (!r.isBuiltIn && r.permissions) {
+        const summary = document.createElement('div');
+        summary.className = 'odc-perms-summary';
+
+        const envRows = PERM_ENVS.map(env => {
+          const ep = r.permissions.environments[env];
+          const flags = [];
+          if (ep.createApplications)    flags.push('<span class="badge badge-green" style="font-size:10px;padding:1px 5px">create apps</span>');
+          if (ep.addSystemDependencies) flags.push('<span class="badge badge-purple" style="font-size:10px;padding:1px 5px">sys deps</span>');
+          return `
+            <div class="odc-perms-row">
+              <span class="odc-perms-env">${env}</span>
+              <span class="odc-perms-level">${escHtml(ep.level)}</span>
+              ${flags.length ? `<span class="odc-perms-flags">${flags.join('')}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        summary.innerHTML = `
+          ${envRows}
+          <div class="odc-infra-skip">⚠ Infrastructure-wide permissions not propagated</div>
+        `;
+        item.appendChild(summary);
+      }
+
       rolesBody.appendChild(item);
     }
     rolesCard.appendChild(rolesBody);
