@@ -1016,8 +1016,8 @@
     document.getElementById('perms-panel-' + id)?.classList.toggle('open');
   }
 
-  function toggleODCRolePerms(id) {
-    document.getElementById('odc-perms-' + id)?.classList.toggle('open');
+  function toggleODCRolePerms(roleName) {
+    document.querySelector(`.perms-panel[data-odc-role-name=${CSS.escape(roleName)}]`)?.classList.toggle('open');
   }
 
   function setRoleEnvLevel(roleName, env, value) {
@@ -1183,6 +1183,13 @@
 
   function renderODCOutput(result) {
     const el = document.getElementById('odc-output');
+
+    // Preserve which ODC perms panels are open before wiping the DOM
+    const openODCRoleNames = new Set(
+      [...el.querySelectorAll('.perms-panel.open[data-odc-role-name]')]
+        .map(p => p.dataset.odcRoleName)
+    );
+
     el.innerHTML = '';
 
     // ── ODC Roles ──
@@ -1216,13 +1223,14 @@
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'perms-toggle';
         toggleBtn.textContent = '⚙ Permissions';
-        toggleBtn.setAttribute('onclick', `toggleODCRolePerms('${r.id}')`);
+        toggleBtn.setAttribute('onclick', `toggleODCRolePerms(${JSON.stringify(r.name)})`);
         badgeRow.appendChild(toggleBtn);
 
         // Collapsible container (reuses .perms-panel CSS)
         const collapsePanel = document.createElement('div');
-        collapsePanel.className = 'perms-panel'; // collapsed by default (no 'open')
-        collapsePanel.id = 'odc-perms-' + r.id;
+        const isOpenODC = openODCRoleNames.has(r.name);
+        collapsePanel.className = 'perms-panel' + (isOpenODC ? ' open' : '');
+        collapsePanel.dataset.odcRoleName = r.name;
         collapsePanel.style.cssText = 'background:#f0fdf8; border-color:#99f6e4;';
 
         const envRows = PERM_ENVS.map(env => {
