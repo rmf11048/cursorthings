@@ -575,6 +575,11 @@
   <section class="panel" id="panel-o11">
     <div class="panel-title">
       <span>⚙️</span> O11 Infrastructure Input
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn-secondary btn-sm" onclick="triggerImport()" title="Import configuration from JSON file">⬆ Import</button>
+        <button class="btn-secondary btn-sm" onclick="exportConfig()" title="Export configuration to JSON file">⬇ Export</button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importConfig(event)" />
     </div>
 
     <!-- Infrastructure Name -->
@@ -630,8 +635,8 @@
 
   let state = {
     infraName: '',
-    roles: [],       // { id, name, isBuiltIn, permissions }
-    users: [],       // { id, name, email, assignments: [{ roleId, level, scopeName }] }
+    roles: [],       // { name, isBuiltIn, permissions }
+    users: [],       // { name, email, assignments: [{ roleName, level, scopeName }] }
     existingODCUsers: [], // { email, orgRole }
   };
 
@@ -692,16 +697,12 @@
   // ─── Sample Data ───────────────────────────────────────────────────────────
 
   function loadSampleData() {
-    const rDev = uid(), rAdmin = uid(), rFinMgr = uid(), rSalesViewer = uid();
-
-    const u1 = uid(), u2 = uid(), u3 = uid(), u4 = uid();
-
     state = {
       infraName: 'Acme Platform',
       roles: [
-        { id: rDev,         name: 'Developer',      isBuiltIn: true,  permissions: defaultPermissions('developer') },
-        { id: rAdmin,       name: 'Administrator',  isBuiltIn: true,  permissions: defaultPermissions('admin')     },
-        { id: rFinMgr,      name: 'ReleaseManager', isBuiltIn: false, permissions: {
+        { name: 'Developer',      isBuiltIn: true,  permissions: defaultPermissions('developer') },
+        { name: 'Administrator',  isBuiltIn: true,  permissions: defaultPermissions('admin')     },
+        { name: 'ReleaseManager', isBuiltIn: false, permissions: {
             environments: {
               Dev:        { level: 'List Applications', createApplications: false, addSystemDependencies: false },
               QA:         { level: 'List Applications', createApplications: false, addSystemDependencies: false },
@@ -710,7 +711,7 @@
             manageUsersAndRoles: false,
             manageTeamsAndApplicationRoles: false,
           }},
-        { id: rSalesViewer, name: 'QAReviewer',     isBuiltIn: false, permissions: {
+        { name: 'QAReviewer',     isBuiltIn: false, permissions: {
             environments: {
               Dev:        { level: 'Open and Debug Applications', createApplications: false, addSystemDependencies: false },
               QA:         { level: 'Open and Debug Applications', createApplications: false, addSystemDependencies: false },
@@ -722,36 +723,36 @@
       ],
       users: [
         {
-          id: u1, name: 'Alice Smith', email: 'alice@acme.com',
+          name: 'Alice Smith', email: 'alice@acme.com',
           assignments: [
-            { id: uid(), roleId: rDev,    level: 'default', scopeName: '' },
-            { id: uid(), roleId: rFinMgr, level: 'team',    scopeName: 'Platform Team' },
+            { roleName: 'Developer',       level: 'default', scopeName: '' },
+            { roleName: 'ReleaseManager',  level: 'team',    scopeName: 'Platform Team' },
           ]
         },
         {
-          id: u2, name: 'Bob Jones', email: 'bob@acme.com',
+          name: 'Bob Jones', email: 'bob@acme.com',
           assignments: [
-            { id: uid(), roleId: rAdmin,       level: 'default', scopeName: '' },
-            { id: uid(), roleId: rSalesViewer, level: 'app',     scopeName: 'OnboardingApp' },
+            { roleName: 'Administrator',   level: 'default', scopeName: '' },
+            { roleName: 'QAReviewer',      level: 'app',     scopeName: 'OnboardingApp' },
           ]
         },
         {
-          id: u3, name: 'Carol Davis', email: 'carol@acme.com',
+          name: 'Carol Davis', email: 'carol@acme.com',
           assignments: [
-            { id: uid(), roleId: rDev, level: 'default', scopeName: '' },
-            { id: uid(), roleId: rDev, level: 'team',    scopeName: 'DevTeam' },
+            { roleName: 'Developer',       level: 'default', scopeName: '' },
+            { roleName: 'Developer',       level: 'team',    scopeName: 'DevTeam' },
           ]
         },
         {
-          id: u4, name: 'Dave Wilson', email: 'dave@acme.com',
+          name: 'Dave Wilson', email: 'dave@acme.com',
           assignments: [
-            { id: uid(), roleId: rSalesViewer, level: 'default', scopeName: '' },
+            { roleName: 'QAReviewer',      level: 'default', scopeName: '' },
           ]
         },
       ],
       existingODCUsers: [
-        { id: uid(), email: 'bob@acme.com',  orgRole: 'ITManager' },
-        { id: uid(), email: 'eve@acme.com',  orgRole: 'Administrator' },
+        { email: 'bob@acme.com', orgRole: 'ITManager' },
+        { email: 'eve@acme.com', orgRole: 'Administrator' },
       ],
     };
   }
@@ -797,7 +798,7 @@
       }
 
       odcRoles.push({ id: odcRoleId, name: odcRoleName, isBuiltIn: false, source: r.name, isBuiltInO11: r.isBuiltIn, permissions: odcPermissions });
-      roleMap[r.id] = odcRoleId;
+      roleMap[r.name] = odcRoleId;
 
       if (r.isBuiltIn) {
         audit.push(`O11 built-in role "${r.name}" imported as custom ODC role "${odcRoleName}" with its environment-level permissions.`);
@@ -829,8 +830,8 @@
         odcOrgRole = existing.orgRole; // kept as-is
         audit.push(`User "${u.email}" already exists in ODC with org role "${existing.orgRole}". Skipping user creation; keeping existing org role.`);
       } else {
-        if (defaultAssignment && roleMap[defaultAssignment.roleId]) {
-          const mappedODCRole = odcRoles.find(r => r.id === roleMap[defaultAssignment.roleId]);
+        if (defaultAssignment && roleMap[defaultAssignment.roleName]) {
+          const mappedODCRole = odcRoles.find(r => r.id === roleMap[defaultAssignment.roleName]);
           odcOrgRole = mappedODCRole ? mappedODCRole.name : null;
         }
         audit.push(`User "${u.email}" is new to ODC. Creating user with org role "${odcOrgRole || '(none)'}". An email invite will be sent to this user.`);
@@ -846,7 +847,7 @@
 
       // Map team/app-level assignments to ODC (default-level becomes the org role, not a separate assignment)
       for (const a of u.assignments) {
-        const odcRoleId = roleMap[a.roleId];
+        const odcRoleId = roleMap[a.roleName];
         if (!odcRoleId) continue;
         const odcRole = odcRoles.find(r => r.id === odcRoleId);
         if (!odcRole) continue;
@@ -887,17 +888,18 @@
       return;
     }
 
-    // Preserve which panels are currently open across re-renders
-    const openIds = new Set(
-      [...el.querySelectorAll('.perms-panel.open')].map(p => p.dataset.roleId)
+    // Preserve which panels are currently open across re-renders (keyed by role name)
+    const openNames = new Set(
+      [...el.querySelectorAll('.perms-panel.open')].map(p => p.dataset.roleName)
     );
 
     el.innerHTML = '';
 
-    for (const role of state.roles) {
+    state.roles.forEach((role, i) => {
       const isAdmin = role.isBuiltIn && role.name === 'Administrator';
       const readOnly = isAdmin;
       const p = role.permissions;
+      const encodedName = encodeURIComponent(role.name);
 
       // Outer wrapper (role-row + perms-panel stacked)
       const wrapper = document.createElement('div');
@@ -912,19 +914,19 @@
         ${role.isBuiltIn
           ? '<span class="badge badge-blue">built-in</span>'
           : '<span class="badge badge-teal">custom</span>'}
-        <button class="perms-toggle" onclick="toggleRolePerms('${role.id}')">
+        <button class="perms-toggle" onclick="toggleRolePerms(${i})">
           ${readOnly ? '🔒 Permissions' : '⚙ Permissions'}
         </button>
         ${role.isBuiltIn
           ? `<button class="btn-secondary btn-sm" disabled title="Built-in roles cannot be removed" style="opacity:0.4">✕</button>`
-          : `<button class="btn-danger btn-sm" onclick="removeRole('${role.id}')">✕</button>`}
+          : `<button class="btn-danger btn-sm" onclick="removeRole(${escHtml(JSON.stringify(role.name))})">✕</button>`}
       `;
 
       // Permissions panel
       const panel = document.createElement('div');
-      panel.className = 'perms-panel' + (openIds.has(role.id) ? ' open' : '');
-      panel.id = 'perms-panel-' + role.id;
-      panel.dataset.roleId = role.id;
+      panel.className = 'perms-panel' + (openNames.has(role.name) ? ' open' : '');
+      panel.id = 'perms-panel-' + i;
+      panel.dataset.roleName = role.name;
 
       if (p) {
         const dis = readOnly ? 'disabled' : '';
@@ -938,18 +940,18 @@
           const ep = p.environments[env];
           return `
             <span class="env-label">${env}</span>
-            <select ${dis} onchange="setRoleEnvLevel('${role.id}','${env}',this.value)">
+            <select ${dis} onchange="setRoleEnvLevel(${escHtml(JSON.stringify(role.name))},'${env}',this.value)">
               ${levelOptions(ep.level)}
             </select>
             <div class="cb-cell">
               <input type="checkbox" ${dis} ${ep.createApplications ? 'checked' : ''}
                 title="Create Applications"
-                onchange="setRoleEnvBool('${role.id}','${env}','createApplications',this.checked)" />
+                onchange="setRoleEnvBool(${escHtml(JSON.stringify(role.name))},'${env}','createApplications',this.checked)" />
             </div>
             <div class="cb-cell">
               <input type="checkbox" ${dis} ${ep.addSystemDependencies ? 'checked' : ''}
                 title="Add System Dependencies"
-                onchange="setRoleEnvBool('${role.id}','${env}','addSystemDependencies',this.checked)" />
+                onchange="setRoleEnvBool(${escHtml(JSON.stringify(role.name))},'${env}','addSystemDependencies',this.checked)" />
             </div>
           `;
         }).join('');
@@ -966,12 +968,12 @@
             <div class="perms-infra-title">Infrastructure-wide</div>
             <div class="perms-infra-row">
               <input type="checkbox" ${dis} ${p.manageUsersAndRoles ? 'checked' : ''}
-                onchange="setRoleInfraBool('${role.id}','manageUsersAndRoles',this.checked)" />
+                onchange="setRoleInfraBool(${escHtml(JSON.stringify(role.name))},'manageUsersAndRoles',this.checked)" />
               <span>Manage Users &amp; Roles</span>
             </div>
             <div class="perms-infra-row">
               <input type="checkbox" ${dis} ${p.manageTeamsAndApplicationRoles ? 'checked' : ''}
-                onchange="setRoleInfraBool('${role.id}','manageTeamsAndApplicationRoles',this.checked)" />
+                onchange="setRoleInfraBool(${escHtml(JSON.stringify(role.name))},'manageTeamsAndApplicationRoles',this.checked)" />
               <span>Manage Teams &amp; Application Roles</span>
             </div>
             <div class="perms-infra-note">
@@ -984,7 +986,7 @@
       wrapper.appendChild(row);
       wrapper.appendChild(panel);
       el.appendChild(wrapper);
-    }
+    });
   }
 
   function addRole() {
@@ -995,16 +997,14 @@
       alert('A role with that name already exists.');
       return;
     }
-    state.roles.push({ id: uid(), name: trimmed, isBuiltIn: false, permissions: defaultPermissions('custom') });
+    state.roles.push({ name: trimmed, isBuiltIn: false, permissions: defaultPermissions('custom') });
     refresh();
   }
 
-  function removeRole(id) {
-    // Remove from roles
-    state.roles = state.roles.filter(r => r.id !== id);
-    // Remove assignments referencing this role
+  function removeRole(name) {
+    state.roles = state.roles.filter(r => r.name !== name);
     for (const u of state.users) {
-      u.assignments = u.assignments.filter(a => a.roleId !== id);
+      u.assignments = u.assignments.filter(a => a.roleName !== name);
     }
     refresh();
   }
@@ -1013,20 +1013,24 @@
     document.getElementById('perms-panel-' + id)?.classList.toggle('open');
   }
 
-  function setRoleEnvLevel(roleId, env, value) {
-    const r = state.roles.find(r => r.id === roleId);
+  function toggleODCRolePerms(id) {
+    document.getElementById('odc-perms-' + id)?.classList.toggle('open');
+  }
+
+  function setRoleEnvLevel(roleName, env, value) {
+    const r = state.roles.find(r => r.name === roleName);
     if (r?.permissions?.environments[env]) r.permissions.environments[env].level = value;
     refresh();
   }
 
-  function setRoleEnvBool(roleId, env, field, checked) {
-    const r = state.roles.find(r => r.id === roleId);
+  function setRoleEnvBool(roleName, env, field, checked) {
+    const r = state.roles.find(r => r.name === roleName);
     if (r?.permissions?.environments[env]) r.permissions.environments[env][field] = checked;
     refresh();
   }
 
-  function setRoleInfraBool(roleId, field, checked) {
-    const r = state.roles.find(r => r.id === roleId);
+  function setRoleInfraBool(roleName, field, checked) {
+    const r = state.roles.find(r => r.name === roleName);
     if (r?.permissions) r.permissions[field] = checked;
     refresh();
   }
@@ -1042,25 +1046,21 @@
       const block = document.createElement('div');
       block.className = 'user-block';
 
-      const roleOptions = state.roles.map(r =>
-        `<option value="${r.id}">${escHtml(r.name)}${r.isBuiltIn ? ' ★' : ''}</option>`
-      ).join('');
-
-      const assignmentRows = user.assignments.map(a => `
+      const assignmentRows = user.assignments.map((a, ai) => `
         <div class="assignment-row">
-          <select onchange="updateAssignmentLevel('${user.id}','${a.id}',this.value)">
+          <select onchange="updateAssignmentLevel(${escHtml(JSON.stringify(user.email))},${ai},this.value)">
             <option value="default" ${a.level==='default'?'selected':''}>default</option>
             <option value="team"    ${a.level==='team'?'selected':''}>team</option>
             <option value="app"     ${a.level==='app'?'selected':''}>app</option>
           </select>
-          <select onchange="updateAssignmentRole('${user.id}','${a.id}',this.value)">
-            ${state.roles.map(r => `<option value="${r.id}" ${r.id===a.roleId?'selected':''}>${escHtml(r.name)}${r.isBuiltIn?' ★':''}</option>`).join('')}
+          <select onchange="updateAssignmentRole(${escHtml(JSON.stringify(user.email))},${ai},this.value)">
+            ${state.roles.map(r => `<option value="${escHtml(r.name)}" ${r.name===a.roleName?'selected':''}>${escHtml(r.name)}${r.isBuiltIn?' ★':''}</option>`).join('')}
           </select>
           <input type="text" placeholder="${a.level === 'default' ? '(n/a)' : 'name...'}"
             value="${escHtml(a.scopeName || '')}"
             ${a.level === 'default' ? 'disabled style="opacity:0.4"' : ''}
-            onchange="updateAssignmentScope('${user.id}','${a.id}',this.value)" />
-          <button class="btn-danger btn-sm" onclick="removeAssignment('${user.id}','${a.id}')">✕</button>
+            onchange="updateAssignmentScope(${escHtml(JSON.stringify(user.email))},${ai},this.value)" />
+          <button class="btn-danger btn-sm" onclick="removeAssignment(${escHtml(JSON.stringify(user.email))},${ai})">✕</button>
         </div>
       `).join('');
 
@@ -1071,8 +1071,8 @@
             <div style="font-size:11px;color:var(--text-muted)">${escHtml(user.name)}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <button class="btn-secondary btn-sm" onclick="addAssignment('${user.id}')">+ Assignment</button>
-            <button class="btn-danger btn-sm" onclick="removeUser('${user.id}')">Remove</button>
+            <button class="btn-secondary btn-sm" onclick="addAssignment(${escHtml(JSON.stringify(user.email))})">+ Assignment</button>
+            <button class="btn-danger btn-sm" onclick="removeUser(${escHtml(JSON.stringify(user.email))})">Remove</button>
           </div>
         </div>
         <div class="user-block-body">
@@ -1095,47 +1095,47 @@
       return;
     }
     const name = prompt('User display name:') || email;
-    state.users.push({ id: uid(), email: email.trim(), name: name.trim(), assignments: [] });
+    state.users.push({ email: email.trim(), name: name.trim(), assignments: [] });
     refresh();
   }
 
-  function removeUser(id) {
-    state.users = state.users.filter(u => u.id !== id);
+  function removeUser(email) {
+    state.users = state.users.filter(u => u.email !== email);
     refresh();
   }
 
-  function addAssignment(userId) {
-    const user = state.users.find(u => u.id === userId);
+  function addAssignment(userEmail) {
+    const user = state.users.find(u => u.email === userEmail);
     if (!user) return;
     if (state.roles.length === 0) { alert('Add at least one role first.'); return; }
-    user.assignments.push({ id: uid(), roleId: state.roles[0].id, level: 'default', scopeName: '' });
+    user.assignments.push({ roleName: state.roles[0].name, level: 'default', scopeName: '' });
     refresh();
   }
 
-  function removeAssignment(userId, assignId) {
-    const user = state.users.find(u => u.id === userId);
+  function removeAssignment(userEmail, index) {
+    const user = state.users.find(u => u.email === userEmail);
     if (!user) return;
-    user.assignments = user.assignments.filter(a => a.id !== assignId);
+    user.assignments.splice(index, 1);
     refresh();
   }
 
-  function updateAssignmentLevel(userId, assignId, value) {
-    const user = state.users.find(u => u.id === userId);
-    const a = user && user.assignments.find(a => a.id === assignId);
+  function updateAssignmentLevel(userEmail, index, value) {
+    const user = state.users.find(u => u.email === userEmail);
+    const a = user?.assignments[index];
     if (a) { a.level = value; if (value === 'default') a.scopeName = ''; }
     refresh();
   }
 
-  function updateAssignmentRole(userId, assignId, value) {
-    const user = state.users.find(u => u.id === userId);
-    const a = user && user.assignments.find(a => a.id === assignId);
-    if (a) a.roleId = value;
+  function updateAssignmentRole(userEmail, index, value) {
+    const user = state.users.find(u => u.email === userEmail);
+    const a = user?.assignments[index];
+    if (a) a.roleName = value;
     refresh();
   }
 
-  function updateAssignmentScope(userId, assignId, value) {
-    const user = state.users.find(u => u.id === userId);
-    const a = user && user.assignments.find(a => a.id === assignId);
+  function updateAssignmentScope(userEmail, index, value) {
+    const user = state.users.find(u => u.email === userEmail);
+    const a = user?.assignments[index];
     if (a) a.scopeName = value;
     refresh();
   }
@@ -1153,7 +1153,7 @@
       row.innerHTML = `
         <span class="role-name">${escHtml(u.email)}</span>
         <span class="badge badge-amber">ODC: ${escHtml(u.orgRole)}</span>
-        <button class="btn-danger btn-sm" onclick="removeExistingODCUser('${u.id}')">✕</button>
+        <button class="btn-danger btn-sm" onclick="removeExistingODCUser(${escHtml(JSON.stringify(u.email))})">✕</button>
       `;
       el.appendChild(row);
     }
@@ -1167,12 +1167,12 @@
       alert('Already listed.'); return;
     }
     const orgRole = prompt('Their current ODC org role (e.g. Administrator, ITManager):') || 'Member';
-    state.existingODCUsers.push({ id: uid(), email: email.trim(), orgRole: orgRole.trim() });
+    state.existingODCUsers.push({ email: email.trim(), orgRole: orgRole.trim() });
     refresh();
   }
 
-  function removeExistingODCUser(id) {
-    state.existingODCUsers = state.existingODCUsers.filter(u => u.id !== id);
+  function removeExistingODCUser(email) {
+    state.existingODCUsers = state.existingODCUsers.filter(u => u.email !== email);
     refresh();
   }
 
@@ -1207,10 +1207,20 @@
       `;
       item.appendChild(badgeRow);
 
-      // Permissions summary for custom ODC roles
+      // Permissions summary for custom ODC roles (collapsible, collapsed by default)
       if (!r.isBuiltIn && r.permissions) {
-        const summary = document.createElement('div');
-        summary.className = 'odc-perms-summary';
+        // Add toggle button to the badges row
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'perms-toggle';
+        toggleBtn.textContent = '⚙ Permissions';
+        toggleBtn.setAttribute('onclick', `toggleODCRolePerms('${r.id}')`);
+        badgeRow.appendChild(toggleBtn);
+
+        // Collapsible container (reuses .perms-panel CSS)
+        const collapsePanel = document.createElement('div');
+        collapsePanel.className = 'perms-panel'; // collapsed by default (no 'open')
+        collapsePanel.id = 'odc-perms-' + r.id;
+        collapsePanel.style.cssText = 'background:#f0fdf8; border-color:#99f6e4;';
 
         const envRows = PERM_ENVS.map(env => {
           const ep = r.permissions.environments[env];
@@ -1226,18 +1236,15 @@
           `;
         }).join('');
 
-        summary.innerHTML = `
-          <div class="odc-perms-portfolio-label">Permissions for portfolio: <strong>${escHtml(result.infraName)}</strong></div>
-          ${envRows}
-          <div class="odc-infra-skip">⚠ Infrastructure-wide permissions not propagated</div>
+        collapsePanel.innerHTML = `
+          <div class="odc-perms-summary">
+            <div class="odc-perms-portfolio-label">Permissions for portfolio: <strong>${escHtml(result.infraName)}</strong></div>
+            ${envRows}
+            <div class="odc-infra-skip">⚠ Infrastructure-wide permissions not propagated</div>
+          </div>
+          <div class="odc-infra-skip">⚠ Organization permissions and other portfolio permissions are not set</div>
         `;
-        item.appendChild(summary);
-
-        const otherPermsNote = document.createElement('div');
-        otherPermsNote.className = 'odc-infra-skip';
-        otherPermsNote.style.cssText = 'margin-top:4px;';
-        otherPermsNote.textContent = '⚠ Organization permissions and other portfolio permissions are not set';
-        item.appendChild(otherPermsNote);
+        item.appendChild(collapsePanel);
       }
 
       rolesBody.appendChild(item);
@@ -1383,6 +1390,47 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  // ─── Export / Import ───────────────────────────────────────────────────────
+
+  function exportConfig() {
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (state.infraName.trim() || 'o11-config').replace(/[^a-z0-9_\-]/gi, '_');
+    a.href = url;
+    a.download = safeName + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function triggerImport() {
+    document.getElementById('import-file-input').value = '';
+    document.getElementById('import-file-input').click();
+  }
+
+  function importConfig(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data.roles) || !Array.isArray(data.users) || !Array.isArray(data.existingODCUsers)
+            || data.roles.some(r => !r.name) || data.users.some(u => !u.email)) {
+          alert('Invalid configuration file: missing required fields (roles[].name, users[].email, existingODCUsers).');
+          return;
+        }
+        state = data;
+        document.getElementById('infra-name').value = state.infraName || '';
+        refresh();
+      } catch (err) {
+        alert('Failed to parse JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   }
 
   // ─── Bootstrap ─────────────────────────────────────────────────────────────
