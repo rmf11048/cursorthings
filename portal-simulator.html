@@ -1813,6 +1813,10 @@ document.getElementById('toggle-inputs-btn').addEventListener('click', () => {
   }
 });
 
+// Hide inputs by default
+document.getElementById('inputs-panel').classList.add('hidden');
+document.getElementById('toggle-inputs-btn').textContent = '▼ Show inputs';
+
 document.getElementById('simulate-btn').addEventListener('click', runSimulation);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
