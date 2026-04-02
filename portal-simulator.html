@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ODC Portal Simulator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --sidebar-bg: #161b2e;
+  --card-bg: #1a2035;
+  --card-border: #2a3352;
+  --table-header-bg: #151a2d;
+  --text: #e2e8f0;
+  --text-muted: #8892a4;
+  --text-dim: #4a5568;
+  --blue: #4f6ef7;
+  --green: #22c55e;
+  --badge-border: #4a5568;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0a0d14;
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Top control strip ── */
+#control-strip {
+  background: #1e2435;
+  border-bottom: 1px solid #2a3352;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+#control-strip h1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c8d0e0;
+  white-space: nowrap;
+}
+.ctrl-btn {
+  background: #2a3352;
+  color: var(--text);
+  border: 1px solid #3a4462;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ctrl-btn:hover { background: #3a4462; }
+
+/* ── Inputs panel ── */
+#inputs-panel {
+  background: #141824;
+  border-bottom: 1px solid #2a3352;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+.inputs-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.input-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.input-col label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.input-col textarea {
+  background: #0f1117;
+  border: 1px solid #2a3352;
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  padding: 8px;
+  resize: vertical;
+  height: 100px;
+  outline: none;
+}
+.input-col textarea:focus { border-color: var(--blue); }
+.inputs-actions {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 18px;
+}
+.sim-btn {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sim-btn:hover { background: #3d5ce0; }
+#error-msg {
+  color: #f87171;
+  font-size: 11px;
+  max-width: 200px;
+  text-align: right;
+}
+
+/* ── Portal shell ── */
+#portal-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Top nav */
+#top-nav {
+  height: 48px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid #1e2844;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.nav-left { display: flex; align-items: center; gap: 12px; }
+.os-logo {
+  width: 32px; height: 32px;
+  background: #e03b2c;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.nav-org-portfolio { display: flex; flex-direction: column; }
+.nav-org-name { font-size: 10px; color: var(--text-muted); }
+.nav-portfolio-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 4px; cursor: default;
+}
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-icon-btn {
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: default;
+  display: flex; align-items: center; gap: 4px;
+}
+.avatar-circle {
+  width: 30px; height: 30px;
+  background: #4f6ef7;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  cursor: default;
+}
+
+/* Middle: sidebar + content */
+#portal-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 220px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid #1e2844;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: 8px 0 16px;
+}
+.sidebar-back {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: default;
+  border-bottom: 1px solid #1e2844;
+  margin-bottom: 8px;
+}
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  padding: 12px 16px 4px;
+}
+.sidebar-item {
+  display: flex; align-items: center;
+  padding: 7px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: default;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+.sidebar-item.active {
+  color: var(--blue);
+  background: rgba(79,110,247,0.08);
+  border-left-color: var(--blue);
+}
+
+/* Main content */
+#main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 40px;
+  background: var(--bg);
+}
+
+/* ── View: Role list ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+.page-title { font-size: 24px; font-weight: 700; color: var(--text); }
+.create-role-btn {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: default;
+  opacity: 0.7;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.page-subtitle a { color: var(--blue); text-decoration: none; cursor: default; }
+.search-box {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 8px 12px;
+  width: 280px;
+  outline: none;
+  margin-bottom: 20px;
+  display: block;
+}
+.search-box::placeholder { color: var(--text-dim); }
+.search-box:focus { border-color: var(--blue); }
+
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.role-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.role-card:hover { border-color: var(--blue); background: #1f2845; }
+.role-card-top {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.role-card-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.builtin-badge {
+  border: 1px solid var(--badge-border);
+  border-radius: 12px;
+  padding: 1px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.role-card-users { font-size: 12px; color: var(--text-muted); }
+
+/* ── View: Role detail ── */
+.breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--blue);
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.breadcrumb:hover { text-decoration: underline; }
+.role-detail-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 28px;
+}
+.role-detail-title { font-size: 26px; font-weight: 700; color: var(--text); }
+.user-avatars {
+  display: flex; align-items: center; gap: 8px;
+}
+.avatar-stack { display: flex; }
+.avatar-sm {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--sidebar-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  margin-left: -6px;
+}
+.avatar-sm:first-child { margin-left: 0; }
+.avatar-more {
+  background: var(--card-border);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.more-btn {
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: default;
+  line-height: 1;
+}
+
+/* Permission sections */
+.perm-section { margin-bottom: 28px; }
+.perm-section-title {
+  font-size: 16px; font-weight: 600; color: var(--text);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 8px 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: default;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+  font-weight: 600;
+}
+
+/* Permission subsection card */
+.perm-subsection {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.perm-subsection-header {
+  background: var(--table-header-bg);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--card-border);
+}
+.perm-items-row {
+  display: flex; flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 12px 16px;
+}
+.perm-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.perm-check { color: var(--green); font-size: 13px; }
+.perm-dash { color: var(--text-dim); font-size: 13px; }
+.perm-name { color: var(--text); }
+.perm-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px;
+  border: 1px solid var(--text-dim);
+  border-radius: 50%;
+  font-size: 9px;
+  color: var(--text-dim);
+  cursor: default;
+  flex-shrink: 0;
+}
+
+/* Permission table */
+.perm-table-wrap { padding: 10px 16px 14px; }
+.perm-flat-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+.perm-flat-item:last-child { border-bottom: none; }
+.perm-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  font-size: 12px;
+}
+.perm-table th {
+  background: var(--table-header-bg);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 7px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--card-border);
+  border-right: 1px solid var(--card-border);
+}
+.perm-table th:first-child { text-align: left; }
+.perm-table th:last-child { border-right: none; }
+.perm-table td {
+  padding: 7px 12px;
+  color: var(--text);
+  border-bottom: 1px solid var(--card-border);
+  border-right: 1px solid var(--card-border);
+  text-align: center;
+}
+.perm-table td:first-child { text-align: left; color: var(--text-muted); }
+.perm-table td:last-child { border-right: none; }
+.perm-table tr:last-child td { border-bottom: none; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3352; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4362; }
+
+.hidden { display: none !important; }
+
+/* ── O11 slider visualization ── */
+.slider-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.slider-card-header {
+  background: var(--table-header-bg);
+  padding: 8px 16px;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--card-border);
+}
+.slider-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.slider-table th {
+  background: var(--table-header-bg);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--card-border);
+  border-right: 1px solid var(--card-border);
+  text-align: center;
+}
+.slider-table th:first-child { text-align: left; min-width: 220px; }
+.slider-table th:last-child { border-right: none; }
+.slider-table td {
+  border-bottom: 1px solid var(--card-border);
+  border-right: 1px solid var(--card-border);
+  padding: 0;
+}
+.slider-table td:first-child {
+  padding: 4px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.slider-table td:last-child { border-right: none; }
+.slider-table tr:last-child td { border-bottom: none; }
+.slider-table tr.level-current td:first-child { color: var(--text); font-weight: 600; }
+.slider-cell { text-align: center; vertical-align: middle; width: 110px; }
+.slider-cell-inner {
+  position: relative;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slider-line-seg {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  top: 0; bottom: 0;
+  background: var(--blue);
+}
+.slider-dot {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: 2px solid var(--card-bg);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+
+/* ── Users table ── */
+.users-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.users-table th {
+  background: var(--table-header-bg);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+}
+.users-table td {
+  padding: 10px 16px;
+  color: var(--text);
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+}
+.users-table tr:last-child td { border-bottom: none; }
+.users-table tr:hover td { background: rgba(255,255,255,0.02); cursor: pointer; }
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.user-cell-info { display: flex; flex-direction: column; }
+.user-cell-name { font-weight: 500; color: var(--text); }
+.user-cell-email { font-size: 11px; color: var(--text-muted); }
+.avatar-lg {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.badge-active {
+  background: rgba(34,197,94,0.15);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 11px; font-weight: 600;
+  display: inline-block; white-space: nowrap;
+}
+.badge-invited {
+  background: rgba(251,191,36,0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 11px; font-weight: 600;
+  display: inline-block; white-space: nowrap;
+}
+.text-muted-cell { color: var(--text-muted); }
+.menu-dots { color: var(--text-muted); cursor: default; font-size: 18px; letter-spacing: 2px; }
+
+/* ── User detail ── */
+.user-detail-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px;
+}
+.avatar-xl {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.user-detail-name-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 24px; font-weight: 700; color: var(--text);
+  flex-wrap: wrap;
+}
+.user-detail-meta {
+  display: flex; gap: 40px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--card-border);
+  flex-wrap: wrap;
+}
+.meta-item { display: flex; flex-direction: column; gap: 3px; }
+.meta-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.meta-value { font-size: 13px; color: var(--text); }
+.scope-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.scope-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--table-header-bg);
+}
+.scope-card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.edit-role-btn {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  border-radius: 5px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: default;
+}
+.scope-card-body { padding: 14px 16px; }
+.org-role-link { color: var(--blue); font-size: 13px; cursor: default; }
+.assets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.assets-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 8px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+  background: var(--table-header-bg);
+}
+.assets-table td {
+  padding: 8px 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+  font-size: 12px;
+}
+.assets-table tr:last-child td { border-bottom: none; }
+.asset-name-cell { display: flex; align-items: center; gap: 8px; }
+.asset-icon {
+  width: 20px; height: 20px;
+  background: #2a3352;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--text-muted);
+  flex-shrink: 0;
+}
+.scope-stage-badge {
+  background: rgba(79,110,247,0.12);
+  color: var(--blue);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+  display: inline-block;
+  margin-right: 6px;
+}
+.scope-portfolio-name {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.empty-note { color: var(--text-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- Control strip -->
+<div id="control-strip">
+  <h1>ODC Portal Simulator</h1>
+  <button class="ctrl-btn" id="load-sample-btn">Load sample</button>
+  <button class="ctrl-btn" id="toggle-inputs-btn">▲ Hide inputs</button>
+</div>
+
+<!-- Inputs panel -->
+<div id="inputs-panel">
+  <div class="inputs-row">
+    <div class="input-col">
+      <label>ODC Existing State (JSON)</label>
+      <textarea id="odc-input" spellcheck="false"></textarea>
+    </div>
+    <div class="input-col">
+      <label>O11 Infrastructure (JSON)</label>
+      <textarea id="o11-input" spellcheck="false"></textarea>
+    </div>
+    <div class="inputs-actions">
+      <button class="sim-btn" id="simulate-btn">&#9654; Simulate Import</button>
+      <div id="error-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Portal shell -->
+<div id="portal-shell">
+  <!-- Top nav -->
+  <div id="top-nav">
+    <div class="nav-left">
+      <div class="os-logo">OS</div>
+      <div class="nav-org-portfolio">
+        <span class="nav-org-name" id="nav-org-name">Organization</span>
+        <span class="nav-portfolio-name" id="nav-portfolio-name">Portfolio &#9662;</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-icon-btn">&#9881; Forge</span>
+      <span class="nav-icon-btn">?</span>
+      <div class="avatar-circle">U</div>
+    </div>
+  </div>
+
+  <div id="portal-body">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-item" id="sb-users" onclick="showUsers()" style="cursor:pointer">Users</div>
+      <div class="sidebar-item active" id="sb-org-roles" onclick="showList()" style="cursor:pointer">Organization roles</div>
+    </div>
+
+    <!-- Main content -->
+    <div id="main-content">
+      <div id="view-list"></div>
+      <div id="view-detail" class="hidden"></div>
+      <div id="view-users" class="hidden"></div>
+      <div id="view-user-detail" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sample data ─────────────────────────────────────────────────────────────
+const SAMPLE_ODC = {
+  "organization": "Acme",
+  "portfolio": "Portfolio",
+  "users": [
+    { "name": "Eve Anderson", "email": "eve@acme.com",   "orgRole": "Administrator", "assignments": [] },
+    { "name": "Bob Jones",    "email": "bob@acme.com",   "orgRole": "Developer",     "assignments": [{ "appName": "WorkflowEngine",      "roleName": "Developer", "stage": "Development" }, { "appName": "EmployeeDirectory",  "roleName": "Developer", "stage": "QA"          }] },
+    { "name": "Frank Chen",   "email": "frank@acme.com", "orgRole": "Developer",     "assignments": [{ "appName": "ProjectTracker",      "roleName": "Developer", "stage": "Development" }, { "appName": "ServiceDesk",        "roleName": "Developer", "stage": "Production"  }] },
+    { "name": "Henry Park",   "email": "henry@acme.com", "orgRole": "Developer",     "assignments": [{ "appName": "WorkflowEngine",      "roleName": "Developer", "stage": "QA"          }, { "appName": "ServiceDesk",        "roleName": "Developer", "stage": "Development" }] },
+    { "name": "Lara Neves",   "email": "lara@acme.com",  "orgRole": "Developer",     "assignments": [{ "appName": "ProjectTracker",      "roleName": "Developer", "stage": "Development" }, { "appName": "EmployeeDirectory",  "roleName": "Developer", "stage": "Development" }, { "appName": "AnalyticsDashboard", "roleName": "Developer", "stage": "Production"  }] }
+  ]
+};
+
+const SAMPLE_O11 = {
+  "infraName": "Acme Core Apps",
+  "roles": [
+    { "name": "Developer",       "isBuiltIn": true,  "permissions": { "environments": { "Dev": { "level": "Full Control",                    "createApplications": true,  "addSystemDependencies": false }, "QA": { "level": "Change and Deploy Applications", "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Open and Debug Applications",    "createApplications": false, "addSystemDependencies": false } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } },
+    { "name": "Administrator",   "isBuiltIn": true,  "permissions": { "environments": { "Dev": { "level": "Full Control",                    "createApplications": true,  "addSystemDependencies": true  }, "QA": { "level": "Full Control",                    "createApplications": true,  "addSystemDependencies": true  }, "Production": { "level": "Full Control",                    "createApplications": true,  "addSystemDependencies": true  } }, "manageUsersAndRoles": true,  "manageTeamsAndApplicationRoles": true  } },
+    { "name": "ReleaseManager",  "isBuiltIn": false, "permissions": { "environments": { "Dev": { "level": "List Applications",               "createApplications": false, "addSystemDependencies": false }, "QA": { "level": "List Applications",               "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Full Control",                    "createApplications": false, "addSystemDependencies": false } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } },
+    { "name": "QAReviewer",      "isBuiltIn": false, "permissions": { "environments": { "Dev": { "level": "Open and Debug Applications",     "createApplications": false, "addSystemDependencies": false }, "QA": { "level": "Open and Debug Applications",     "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Open and Debug Applications",    "createApplications": false, "addSystemDependencies": false } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } },
+    { "name": "TechLead",        "isBuiltIn": false, "permissions": { "environments": { "Dev": { "level": "Full Control",                    "createApplications": true,  "addSystemDependencies": false }, "QA": { "level": "Change and Deploy Applications", "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Open and Debug Applications",    "createApplications": false, "addSystemDependencies": false } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } },
+    { "name": "DevOpsEngineer",  "isBuiltIn": false, "permissions": { "environments": { "Dev": { "level": "Change and Deploy Applications", "createApplications": false, "addSystemDependencies": true  }, "QA": { "level": "Change and Deploy Applications", "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Full Control",                    "createApplications": false, "addSystemDependencies": true  } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } },
+    { "name": "SecurityAuditor", "isBuiltIn": false, "permissions": { "environments": { "Dev": { "level": "Open and Debug Applications",     "createApplications": false, "addSystemDependencies": false }, "QA": { "level": "Open and Debug Applications",     "createApplications": false, "addSystemDependencies": false }, "Production": { "level": "Monitor and Add Dependencies",    "createApplications": false, "addSystemDependencies": false } }, "manageUsersAndRoles": false, "manageTeamsAndApplicationRoles": false } }
+  ],
+  "users": [
+    { "name": "Alice Smith",    "email": "alice@acme.com",  "assignments": [{ "roleName": "Developer",       "level": "default", "scopeName": "" }, { "roleName": "Developer",       "level": "app", "scopeName": "CustomerPortal",     "stage": "Development" }, { "roleName": "ReleaseManager",  "level": "app", "scopeName": "PaymentService",     "stage": "Production"  }, { "roleName": "Developer",       "level": "app", "scopeName": "NotificationEngine", "stage": "Development" }] },
+    { "name": "Bob Jones",      "email": "bob@acme.com",    "assignments": [{ "roleName": "Administrator",   "level": "default", "scopeName": "" }, { "roleName": "QAReviewer",      "level": "app", "scopeName": "OnboardingApp",      "stage": "QA"          }] },
+    { "name": "Carol Davis",    "email": "carol@acme.com",  "assignments": [{ "roleName": "Developer",       "level": "default", "scopeName": "" }, { "roleName": "Developer",       "level": "app", "scopeName": "InventoryApp",       "stage": "Development" }, { "roleName": "Developer",       "level": "app", "scopeName": "ReportingDashboard", "stage": "QA"          }] },
+    { "name": "Dave Wilson",    "email": "dave@acme.com",   "assignments": [{ "roleName": "QAReviewer",      "level": "default", "scopeName": "" }, { "roleName": "QAReviewer",      "level": "app", "scopeName": "MobileApp",          "stage": "QA"          }, { "roleName": "QAReviewer",      "level": "app", "scopeName": "AdminConsole",       "stage": "Development" }, { "roleName": "Developer",       "level": "app", "scopeName": "DataPipeline",       "stage": "Production"  }] },
+    { "name": "Frank Chen",     "email": "frank@acme.com",  "assignments": [{ "roleName": "TechLead",        "level": "default", "scopeName": "" }, { "roleName": "TechLead",        "level": "app", "scopeName": "CustomerPortal",     "stage": "Development" }, { "roleName": "TechLead",        "level": "app", "scopeName": "PaymentService",     "stage": "Production"  }, { "roleName": "Developer",       "level": "app", "scopeName": "AuthService",        "stage": "Development" }] },
+    { "name": "Grace Kim",      "email": "grace@acme.com",  "assignments": [{ "roleName": "DevOpsEngineer",  "level": "default", "scopeName": "" }, { "roleName": "DevOpsEngineer",  "level": "app", "scopeName": "DataPipeline",       "stage": "Production"  }, { "roleName": "DevOpsEngineer",  "level": "app", "scopeName": "NotificationEngine", "stage": "Development" }, { "roleName": "DevOpsEngineer",  "level": "app", "scopeName": "AuthService",        "stage": "QA"          }] },
+    { "name": "Henry Park",     "email": "henry@acme.com",  "assignments": [{ "roleName": "SecurityAuditor", "level": "default", "scopeName": "" }, { "roleName": "SecurityAuditor", "level": "app", "scopeName": "OnboardingApp",      "stage": "QA"          }, { "roleName": "SecurityAuditor", "level": "app", "scopeName": "AdminConsole",       "stage": "Development" }, { "roleName": "SecurityAuditor", "level": "app", "scopeName": "PaymentService",     "stage": "Production"  }] },
+    { "name": "Iris Moreau",    "email": "iris@acme.com",   "assignments": [{ "roleName": "Developer",       "level": "default", "scopeName": "" }, { "roleName": "Developer",       "level": "app", "scopeName": "MobileApp",          "stage": "Development" }, { "roleName": "QAReviewer",      "level": "app", "scopeName": "InventoryApp",       "stage": "QA"          }] },
+    { "name": "Lara Neves",     "email": "lara@acme.com",   "assignments": [{ "roleName": "ReleaseManager",  "level": "default", "scopeName": "" }, { "roleName": "ReleaseManager",  "level": "app", "scopeName": "CustomerPortal",     "stage": "Development" }, { "roleName": "ReleaseManager",  "level": "app", "scopeName": "ReportingDashboard", "stage": "QA"          }] }
+  ],
+  "existingODCUsers": [
+    { "email": "eve@acme.com",  "orgRole": "Administrator" },
+    { "email": "lara@acme.com", "orgRole": "Developer" }
+  ]
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const LEVEL_RANK = {
+  'No Access': 0,
+  'Access': 1,
+  'List Applications': 2,
+  'Monitor and Add Dependencies': 3,
+  'Open and Debug Applications': 4,
+  'Change and Deploy Applications': 5,
+  'Full Control': 6
+};
+
+function rank(level) {
+  return LEVEL_RANK[level] ?? 0;
+}
+
+// ── Avatar colors ─────────────────────────────────────────────────────────────
+const AVATAR_COLORS = ['#4f6ef7','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777'];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xfffffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initials(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  return name.slice(0,2).toUpperCase();
+}
+
+// ── Simulation logic ─────────────────────────────────────────────────────────
+function simulate(odcInput, o11Input) {
+  const infraName = o11Input.infraName || 'O11 Infrastructure';
+  const portfolioName = odcInput.portfolio || 'Portfolio';
+  const orgName = odcInput.organization || 'Organization';
+
+  // Build existing ODC user map (email → orgRole)
+  const existingODCMap = {};
+  (o11Input.existingODCUsers || []).forEach(u => {
+    existingODCMap[u.email.toLowerCase()] = u.orgRole;
+  });
+  (odcInput.users || []).forEach(u => {
+    existingODCMap[u.email.toLowerCase()] = u.orgRole;
+  });
+
+  // Compute portfolio permissions for Administrator (all true)
+  function adminPortfolioPerms() {
+    return {
+      portfolioManagement: {
+        managePortfolio: true,
+        viewStage: { Development: true, QA: true, Production: true },
+        manageStage: { Development: true, QA: true, Production: true }
+      },
+      assetManagement: { open: true, create: true, debug: true, change: true, delete: true },
+      analyze: { viewCodeQuality: true, manageCodeQuality: true, viewEvaluations: true, manageEvaluations: true },
+      connectionManagement: { create: true, change: true, delete: true },
+      releaseManagement: {
+        release: true,
+        deployAssets: { Development: true, QA: true, Production: true }
+      },
+      monitoring: {
+        accessLogs: { Development: true, QA: true, Production: true },
+        accessUserInfo: { Development: true, QA: true, Production: true }
+      },
+      configurationManagement: {
+        viewConfigurations: { Development: true, QA: true, Production: true },
+        editConfigurations: { Development: true, QA: true, Production: true },
+        configureConnections: { Development: true, QA: true, Production: true },
+        manageCustomDomains: { Development: true, QA: true, Production: true },
+        manageEmailSMTP: { Development: true, QA: true, Production: true },
+        manageIPRestrictions: { Development: true, QA: true, Production: true },
+        managePrivateGateways: { Development: true, QA: true, Production: true },
+        manageCSP: { Development: true, QA: true, Production: true }
+      },
+      endUserManagement: {
+        viewEndUsers: { Development: true, QA: true, Production: true },
+        manageEndUserAccess: { Development: true, QA: true, Production: true },
+        manageEndUserGroups: { Development: true, QA: true, Production: true }
+      },
+      maintenance: { viewPlatformUpdates: true, managePlatformUpdates: true },
+      forge: { installUpdate: true, submitEdit: true }
+    };
+  }
+
+  // Developer default portfolio perms
+  function developerPortfolioPerms() {
+    return {
+      portfolioManagement: {
+        managePortfolio: false,
+        viewStage: { Development: true, QA: true, Production: true },
+        manageStage: { Development: false, QA: false, Production: false }
+      },
+      assetManagement: { open: true, create: true, debug: true, change: true, delete: false },
+      analyze: { viewCodeQuality: true, manageCodeQuality: false, viewEvaluations: true, manageEvaluations: false },
+      connectionManagement: { create: false, change: false, delete: false },
+      releaseManagement: {
+        release: true,
+        deployAssets: { Development: true, QA: true, Production: false }
+      },
+      monitoring: {
+        accessLogs: { Development: true, QA: true, Production: false },
+        accessUserInfo: { Development: false, QA: false, Production: false }
+      },
+      configurationManagement: {
+        viewConfigurations: { Development: false, QA: false, Production: false },
+        editConfigurations: { Development: false, QA: false, Production: false },
+        configureConnections: { Development: false, QA: false, Production: false },
+        manageCustomDomains: { Development: false, QA: false, Production: false },
+        manageEmailSMTP: { Development: false, QA: false, Production: false },
+        manageIPRestrictions: { Development: false, QA: false, Production: false },
+        managePrivateGateways: { Development: false, QA: false, Production: false },
+        manageCSP: { Development: false, QA: false, Production: false }
+      },
+      endUserManagement: {
+        viewEndUsers: { Development: false, QA: false, Production: false },
+        manageEndUserAccess: { Development: false, QA: false, Production: false },
+        manageEndUserGroups: { Development: false, QA: false, Production: false }
+      },
+      maintenance: { viewPlatformUpdates: true, managePlatformUpdates: false },
+      forge: { installUpdate: true, submitEdit: false }
+    };
+  }
+
+  // All false portfolio perms
+  function emptyPortfolioPerms() {
+    return {
+      portfolioManagement: {
+        managePortfolio: false,
+        viewStage: { Development: false, QA: false, Production: false },
+        manageStage: { Development: false, QA: false, Production: false }
+      },
+      assetManagement: { open: false, create: false, debug: false, change: false, delete: false },
+      analyze: { viewCodeQuality: false, manageCodeQuality: false, viewEvaluations: false, manageEvaluations: false },
+      connectionManagement: { create: false, change: false, delete: false },
+      releaseManagement: {
+        release: false,
+        deployAssets: { Development: false, QA: false, Production: false }
+      },
+      monitoring: {
+        accessLogs: { Development: false, QA: false, Production: false },
+        accessUserInfo: { Development: false, QA: false, Production: false }
+      },
+      configurationManagement: {
+        viewConfigurations: { Development: false, QA: false, Production: false },
+        editConfigurations: { Development: false, QA: false, Production: false },
+        configureConnections: { Development: false, QA: false, Production: false },
+        manageCustomDomains: { Development: false, QA: false, Production: false },
+        manageEmailSMTP: { Development: false, QA: false, Production: false },
+        manageIPRestrictions: { Development: false, QA: false, Production: false },
+        managePrivateGateways: { Development: false, QA: false, Production: false },
+        manageCSP: { Development: false, QA: false, Production: false }
+      },
+      endUserManagement: {
+        viewEndUsers: { Development: false, QA: false, Production: false },
+        manageEndUserAccess: { Development: false, QA: false, Production: false },
+        manageEndUserGroups: { Development: false, QA: false, Production: false }
+      },
+      maintenance: { viewPlatformUpdates: false, managePlatformUpdates: false },
+      forge: { installUpdate: false, submitEdit: false }
+    };
+  }
+
+  // Map O11 role permissions to ODC portfolio perms
+  function mapO11ToODC(o11Perms) {
+    const envs = o11Perms.environments || {};
+    const stageMap = { Development: 'Dev', QA: 'QA', Production: 'Production' };
+
+    function r(stage) {
+      const o11Key = stageMap[stage];
+      return rank((envs[o11Key] || {}).level || 'No Access');
+    }
+    function anyRank(n) { return r('Development') >= n || r('QA') >= n || r('Production') >= n; }
+    const anyCreate = Object.values(envs).some(e => e.createApplications);
+    const anySysDeps = Object.values(envs).some(e => e.addSystemDependencies);
+
+    return {
+      portfolioManagement: {
+        managePortfolio: false,
+        viewStage: {
+          Development: r('Development') >= 1,
+          QA: r('QA') >= 1,
+          Production: r('Production') >= 1
+        },
+        manageStage: {
+          Development: r('Development') >= 6,
+          QA: r('QA') >= 6,
+          Production: r('Production') >= 6
+        }
+      },
+      assetManagement: {
+        open: anyRank(2),
+        create: anyCreate,
+        debug: anyRank(4),
+        change: anyRank(5),
+        delete: anyRank(6)
+      },
+      analyze: { viewCodeQuality: false, manageCodeQuality: false, viewEvaluations: false, manageEvaluations: false },
+      connectionManagement: {
+        create: anySysDeps,
+        change: anySysDeps,
+        delete: anyRank(6)
+      },
+      releaseManagement: {
+        release: anyRank(5),
+        deployAssets: {
+          Development: r('Development') >= 5,
+          QA: r('QA') >= 5,
+          Production: r('Production') >= 5
+        }
+      },
+      monitoring: {
+        accessLogs: {
+          Development: r('Development') >= 3,
+          QA: r('QA') >= 3,
+          Production: r('Production') >= 3
+        },
+        accessUserInfo: {
+          Development: r('Development') >= 6,
+          QA: r('QA') >= 6,
+          Production: r('Production') >= 6
+        }
+      },
+      configurationManagement: {
+        viewConfigurations: {
+          Development: r('Development') >= 6,
+          QA: r('QA') >= 6,
+          Production: r('Production') >= 6
+        },
+        editConfigurations: { Development: false, QA: false, Production: false },
+        configureConnections: { Development: false, QA: false, Production: false },
+        manageCustomDomains: { Development: false, QA: false, Production: false },
+        manageEmailSMTP: { Development: false, QA: false, Production: false },
+        manageIPRestrictions: { Development: false, QA: false, Production: false },
+        managePrivateGateways: { Development: false, QA: false, Production: false },
+        manageCSP: { Development: false, QA: false, Production: false }
+      },
+      endUserManagement: {
+        viewEndUsers: { Development: false, QA: false, Production: false },
+        manageEndUserAccess: { Development: false, QA: false, Production: false },
+        manageEndUserGroups: { Development: false, QA: false, Production: false }
+      },
+      maintenance: {
+        viewPlatformUpdates: anyRank(1),
+        managePlatformUpdates: false
+      },
+      forge: {
+        installUpdate: anyRank(2),
+        submitEdit: false
+      }
+    };
+  }
+
+  // Org permissions
+  const allOrgPerms = {
+    manageOrganization: true,
+    viewAuditTrail: true,
+    manageAuditTrailStreaming: true,
+    viewOrganizationMembers: true,
+    manageUsers: true,
+    manageOrganizationAccess: true,
+    manageOrganizationRoles: true,
+    manageAuthentication: true,
+    manageUsersAndAccess: true,
+    openSupportCases: true,
+    viewAllSupportCases: true,
+    viewSubscription: true,
+    manageSubscription: true
+  };
+  const noOrgPerms = Object.fromEntries(Object.keys(allOrgPerms).map(k => [k, false]));
+
+  // Build ODC roles
+  const odcRoles = [];
+
+  // Built-in Administrator
+  const o11AdminRole = (o11Input.roles || []).find(r => r.isBuiltIn && r.name === 'Administrator');
+  const adminO11Perms = o11AdminRole ? o11AdminRole.permissions : {
+    environments: {
+      Dev:        { level: 'Full Control', createApplications: true, addSystemDependencies: true },
+      QA:         { level: 'Full Control', createApplications: true, addSystemDependencies: true },
+      Production: { level: 'Full Control', createApplications: true, addSystemDependencies: true }
+    },
+    manageUsersAndRoles: true,
+    manageTeamsAndApplicationRoles: true
+  };
+  odcRoles.push({
+    name: 'Administrator',
+    isBuiltIn: true,
+    orgPerms: { ...allOrgPerms },
+    o11Perms: adminO11Perms,
+    portfolioTabs: {
+      'Portfolio': adminPortfolioPerms()
+    }
+  });
+
+  // Built-in Developer
+  odcRoles.push({
+    name: 'Developer',
+    isBuiltIn: true,
+    orgPerms: { ...noOrgPerms },
+    o11Perms: {
+      environments: {
+        Dev:        { level: 'No Access', createApplications: false, addSystemDependencies: false },
+        QA:         { level: 'No Access', createApplications: false, addSystemDependencies: false },
+        Production: { level: 'No Access', createApplications: false, addSystemDependencies: false }
+      },
+      manageUsersAndRoles: false,
+      manageTeamsAndApplicationRoles: false
+    },
+    portfolioTabs: {
+      'Portfolio': developerPortfolioPerms()
+    }
+  });
+
+  // Imported O11 roles
+  (o11Input.roles || []).forEach(o11Role => {
+    const odcName = `${o11Role.name} (${infraName})`;
+    odcRoles.push({
+      name: odcName,
+      isBuiltIn: false,
+      orgPerms: { ...noOrgPerms },
+      o11Perms: o11Role.permissions || {},
+      portfolioTabs: {
+        'Portfolio': emptyPortfolioPerms()
+      }
+    });
+  });
+
+  // Build ODC users
+  const odcUsersMap = {};
+
+  // Stable fake last-login date from email hash
+  function fakeLastLogin(email) {
+    let h = 0;
+    for (let i = 0; i < email.length; i++) h = (h * 31 + email.charCodeAt(i)) & 0xfffffff;
+    const daysAgo = (h % 60) + 1;
+    const d = new Date(2026, 2, 1);
+    d.setDate(d.getDate() - daysAgo);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Pre-existing ODC users keep their orgRole
+  (odcInput.users || []).forEach(u => {
+    odcUsersMap[u.email.toLowerCase()] = {
+      name: u.name || u.email,
+      email: u.email,
+      orgRole: u.orgRole,
+      isNew: false,
+      lastLogin: fakeLastLogin(u.email),
+      o11Assignments: [],
+      odcAssignments: (u.assignments || []).map(a => ({
+        assetName: a.appName,
+        roleName: a.roleName,
+        stage: a.stage || 'Development',
+        portfolioName: portfolioName
+      }))
+    };
+  });
+
+  // existingODCUsers keep their orgRole
+  (o11Input.existingODCUsers || []).forEach(u => {
+    const key = u.email.toLowerCase();
+    if (!odcUsersMap[key]) {
+      odcUsersMap[key] = {
+        name: u.name || u.email,
+        email: u.email,
+        orgRole: u.orgRole,
+        isNew: false,
+        lastLogin: fakeLastLogin(u.email),
+        o11Assignments: [],
+        odcAssignments: []
+      };
+    }
+  });
+
+  // O11 users not already in ODC → new ODC users, org role from default assignment
+  (o11Input.users || []).forEach(u => {
+    const key = u.email.toLowerCase();
+    if (!odcUsersMap[key]) {
+      const defaultAssign = (u.assignments || []).find(a => a.level === 'default');
+      let orgRole = 'Developer (' + infraName + ')';
+      if (defaultAssign) orgRole = `${defaultAssign.roleName} (${infraName})`;
+      odcUsersMap[key] = {
+        name: u.name || u.email,
+        email: u.email,
+        orgRole,
+        isNew: true,
+        lastLogin: null,
+        o11Assignments: [],
+        odcAssignments: []
+      };
+    }
+    // Attach team/app-level O11 assignments (for user detail Assets scope)
+    const teamAppAssigns = (u.assignments || []).filter(a => a.level === 'team' || a.level === 'app');
+    if (teamAppAssigns.length && odcUsersMap[key]) {
+      odcUsersMap[key].o11Assignments = teamAppAssigns.map(a => ({
+        assetName: a.scopeName || a.roleName,
+        roleName: `${a.roleName} (${infraName})`,
+        stage: a.stage || 'Development',
+        scopeName: a.scopeName,
+        portfolioName: infraName
+      }));
+    }
+  });
+
+  const odcUsers = Object.values(odcUsersMap);
+
+  // Count users per role
+  const roleCounts = {};
+  odcUsers.forEach(u => {
+    roleCounts[u.orgRole] = (roleCounts[u.orgRole] || 0) + 1;
+  });
+
+  // Attach user counts and user list to roles
+  odcRoles.forEach(r => {
+    r.userCount = roleCounts[r.name] || 0;
+    r.users = odcUsers.filter(u => u.orgRole === r.name);
+  });
+
+  return { orgName, portfolioName, infraName, odcRoles, odcUsers };
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = null;
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function perm(val, name) {
+  const icon = val
+    ? `<span class="perm-check">&#10003;</span>`
+    : `<span class="perm-dash">&#8212;</span>`;
+  return `<span class="perm-item">${icon}<span class="perm-name">${escHtml(name)}</span><span class="perm-info">i</span></span>`;
+}
+
+function stageTable(rows) {
+  // rows: array of { name, perms: {Development, QA, Production} }
+  const stages = ['Development', 'QA', 'Production'];
+  let html = `<div class="perm-table-wrap"><table class="perm-table">
+    <thead><tr>
+      <th></th>
+      ${stages.map(s => `<th>${escHtml(s)}</th>`).join('')}
+    </tr></thead>
+    <tbody>`;
+  rows.forEach(row => {
+    html += `<tr>
+      <td>${escHtml(row.name)}<span class="perm-info" style="margin-left:5px">i</span></td>
+      ${stages.map(s => `<td>${row.perms[s]
+        ? '<span class="perm-check">&#10003;</span>'
+        : '<span class="perm-dash">&#8212;</span>'}</td>`).join('')}
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function flatItem(val, name) {
+  const icon = val
+    ? `<span class="perm-check">&#10003;</span>`
+    : `<span class="perm-dash">&#8212;</span>`;
+  return `<div class="perm-flat-item">${icon}<span class="perm-name">${escHtml(name)}</span><span class="perm-info" style="margin-left:5px">i</span></div>`;
+}
+
+function renderSubsection(title, bodyHtml) {
+  return `<div class="perm-subsection">
+    <div class="perm-subsection-header">${escHtml(title)}</div>
+    ${bodyHtml}
+  </div>`;
+}
+
+function renderOrgPerms(op) {
+  const orgMgmt = `<div class="perm-items-row">
+    ${perm(op.manageOrganization, 'Manage organization')}
+    ${perm(op.viewAuditTrail, 'View audit trail')}
+    ${perm(op.manageAuditTrailStreaming, 'Manage audit trail streaming')}
+  </div>`;
+
+  const manageUsers = `<div class="perm-items-row">
+    ${perm(op.viewOrganizationMembers, 'View organization members')}
+    ${perm(op.manageUsers, 'Manage users')}
+    ${perm(op.manageOrganizationAccess, 'Manage organization access')}
+    ${perm(op.manageOrganizationRoles, 'Manage organization roles')}
+    ${perm(op.manageAuthentication, 'Manage authentication')}
+    ${perm(op.manageUsersAndAccess, 'Manage users and access')}
+  </div>`;
+
+  const support = `<div class="perm-items-row">
+    ${perm(op.openSupportCases, 'Open support cases')}
+    ${perm(op.viewAllSupportCases, 'View all support cases')}
+  </div>`;
+
+  const subs = `<div class="perm-items-row">
+    ${perm(op.viewSubscription, 'View subscription')}
+    ${perm(op.manageSubscription, 'Manage subscription')}
+  </div>`;
+
+  return `
+    <div class="perm-section">
+      <div class="perm-section-title">Organization level</div>
+      ${renderSubsection('Organization management', orgMgmt)}
+      ${renderSubsection('Manage users', manageUsers)}
+      ${renderSubsection('Support', support)}
+      ${renderSubsection('Subscriptions', subs)}
+    </div>`;
+}
+
+function renderPortfolioPerms(pp) {
+  const pm = pp.portfolioManagement;
+  const portfolioMgmt = `
+    ${flatItem(pm.managePortfolio, 'Manage portfolio')}
+    ${stageTable([
+      { name: 'View stage', perms: pm.viewStage },
+      { name: 'Manage stage', perms: pm.manageStage }
+    ])}`;
+
+  const am = pp.assetManagement;
+  const assetMgmt = `<div class="perm-items-row">
+    ${perm(am.open, 'Open')}
+    ${perm(am.create, 'Create')}
+    ${perm(am.debug, 'Debug')}
+    ${perm(am.change, 'Change')}
+    ${perm(am.delete, 'Delete')}
+  </div>`;
+
+  const an = pp.analyze;
+  const analyze = `<div class="perm-items-row">
+    ${perm(an.viewCodeQuality, 'View code quality findings')}
+    ${perm(an.manageCodeQuality, 'Manage code quality findings')}
+    ${perm(an.viewEvaluations, 'View evaluations')}
+    ${perm(an.manageEvaluations, 'Manage evaluations')}
+  </div>`;
+
+  const cm = pp.connectionManagement;
+  const connMgmt = `<div class="perm-items-row">
+    ${perm(cm.create, 'Create')}
+    ${perm(cm.change, 'Change')}
+    ${perm(cm.delete, 'Delete')}
+  </div>`;
+
+  const rm = pp.releaseManagement;
+  const relMgmt = `
+    ${flatItem(rm.release, 'Release')}
+    ${stageTable([
+      { name: 'Deploy assets', perms: rm.deployAssets }
+    ])}`;
+
+  const mo = pp.monitoring;
+  const monitoring = stageTable([
+    { name: 'Access asset logs and traces', perms: mo.accessLogs },
+    { name: 'Access user information', perms: mo.accessUserInfo }
+  ]);
+
+  const cfg = pp.configurationManagement;
+  const configMgmt = stageTable([
+    { name: 'View configurations', perms: cfg.viewConfigurations },
+    { name: 'Edit configurations', perms: cfg.editConfigurations },
+    { name: 'Configure connections', perms: cfg.configureConnections },
+    { name: 'Manage custom domains', perms: cfg.manageCustomDomains },
+    { name: 'Manage email SMTP configuration', perms: cfg.manageEmailSMTP },
+    { name: 'Manage IP restrictions', perms: cfg.manageIPRestrictions },
+    { name: 'Manage private gateways', perms: cfg.managePrivateGateways },
+    { name: 'Manage CSP', perms: cfg.manageCSP }
+  ]);
+
+  const eu = pp.endUserManagement;
+  const endUser = stageTable([
+    { name: 'View end-users', perms: eu.viewEndUsers },
+    { name: 'Manage end-user access', perms: eu.manageEndUserAccess },
+    { name: 'Manage end-user groups', perms: eu.manageEndUserGroups }
+  ]);
+
+  const mt = pp.maintenance;
+  const maintenance = `<div class="perm-items-row">
+    ${perm(mt.viewPlatformUpdates, 'View platform updates')}
+    ${perm(mt.managePlatformUpdates, 'Manage platform updates')}
+  </div>`;
+
+  const fg = pp.forge;
+  const forge = `<div class="perm-items-row">
+    ${perm(fg.installUpdate, 'Install/update assets')}
+    ${perm(fg.submitEdit, 'Submit/edit assets')}
+  </div>`;
+
+  return `
+    ${renderSubsection('Portfolio Management', portfolioMgmt)}
+    ${renderSubsection('Asset management', assetMgmt)}
+    ${renderSubsection('Analyze', analyze)}
+    ${renderSubsection('Connection management', connMgmt)}
+    ${renderSubsection('Release management', relMgmt)}
+    ${renderSubsection('Monitoring', monitoring)}
+    ${renderSubsection('Configuration management', configMgmt)}
+    ${renderSubsection('End-user management', endUser)}
+    ${renderSubsection('Maintenance', maintenance)}
+    ${renderSubsection('Forge', forge)}
+  `;
+}
+
+// ── O11 slider visualization ─────────────────────────────────────────────────
+const PERM_LEVELS_ORDERED = [
+  'Full Control',
+  'Change and Deploy Applications',
+  'Open and Debug Applications',
+  'Monitor and Add Dependencies',
+  'List Applications',
+  'Access',
+  'No Access'
+];
+
+function sliderCell(cellRank, currentRank) {
+  const hasDot = cellRank === currentRank;
+  // line fills from currentRank down to rank 0 (No Access = rank 0)
+  const hasLine = currentRank > 0 && cellRank <= currentRank;
+  let inner = '';
+  if (hasLine) inner += `<div class="slider-line-seg"></div>`;
+  if (hasDot) inner += `<div class="slider-dot"></div>`;
+  return `<td class="slider-cell"><div class="slider-cell-inner">${inner}</div></td>`;
+}
+
+function renderO11PortfolioTab(o11Perms) {
+  const envs = o11Perms.environments || {};
+  const o11Cols = ['Dev', 'QA', 'Production'];
+  const colLabels = ['Development', 'QA', 'Production'];
+  const currentRanks = o11Cols.map(e => LEVEL_RANK[(envs[e] || {}).level || 'No Access'] ?? 0);
+
+  // Permission levels slider
+  let sliderRows = '';
+  PERM_LEVELS_ORDERED.forEach(level => {
+    const cellRank = LEVEL_RANK[level] ?? 0;
+    const isCurrent = currentRanks.some(r => r === cellRank);
+    sliderRows += `<tr class="${isCurrent ? 'level-current' : ''}">
+      <td>${escHtml(level)}</td>
+      ${currentRanks.map(cr => sliderCell(cellRank, cr)).join('')}
+    </tr>`;
+  });
+
+  const sliderHtml = `<div class="slider-card">
+    <div class="slider-card-header">Levels</div>
+    <table class="slider-table">
+      <thead><tr>
+        <th></th>
+        ${colLabels.map(l => `<th>${escHtml(l)}</th>`).join('')}
+      </tr></thead>
+      <tbody>${sliderRows}</tbody>
+    </table>
+  </div>`;
+
+  // Specific permissions table
+  const specFields = [
+    { name: 'Create applications', field: 'createApplications' },
+    { name: 'Add system dependencies', field: 'addSystemDependencies' }
+  ];
+  let specRows = '';
+  specFields.forEach(sf => {
+    specRows += `<tr>
+      <td style="padding:7px 12px;color:var(--text-muted)">${escHtml(sf.name)}</td>
+      ${o11Cols.map(e => {
+        const v = (envs[e] || {})[sf.field];
+        return `<td style="text-align:center;padding:7px 12px;border-right:1px solid var(--card-border)">${v
+          ? '<span class="perm-check">&#10003;</span>'
+          : '<span class="perm-dash">&#8212;</span>'}</td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  const specHtml = `<div class="slider-card">
+    <div class="slider-card-header">Specific</div>
+    <table class="perm-table">
+      <thead><tr>
+        <th></th>
+        ${colLabels.map(l => `<th>${escHtml(l)}</th>`).join('')}
+      </tr></thead>
+      <tbody>${specRows}</tbody>
+    </table>
+  </div>`;
+
+  return sliderHtml + specHtml;
+}
+
+function renderUserAvatars(users) {
+  if (!users || users.length === 0) return '';
+  const shown = users.slice(0, 3);
+  const more = users.length - shown.length;
+  let avatarHtml = `<div class="avatar-stack">`;
+  shown.forEach(u => {
+    const col = avatarColor(u.name);
+    avatarHtml += `<div class="avatar-sm" style="background:${escHtml(col)}" title="${escHtml(u.name)}">${escHtml(initials(u.name))}</div>`;
+  });
+  if (more > 0) {
+    avatarHtml += `<div class="avatar-sm avatar-more">+${more}</div>`;
+  }
+  avatarHtml += `</div>`;
+  return `<div class="user-avatars">${avatarHtml}</div>`;
+}
+
+// ── View rendering ────────────────────────────────────────────────────────────
+function renderList(searchTerm) {
+  if (!state) return;
+  const { odcRoles } = state;
+  const term = (searchTerm || '').toLowerCase();
+  const filtered = odcRoles.filter(r => r.name.toLowerCase().includes(term));
+
+  const cards = filtered.map(role => {
+    const badgeHtml = role.isBuiltIn
+      ? `<span class="builtin-badge">Built-in role</span>`
+      : '';
+    const safeName = escHtml(JSON.stringify(role.name));
+    return `<div class="role-card" onclick="showDetail(${safeName})">
+      <div class="role-card-top">
+        <span class="role-card-name">${escHtml(role.name)}</span>
+        ${badgeHtml}
+      </div>
+      <div class="role-card-users">${role.userCount} user${role.userCount !== 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('view-list').innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">Organization roles</h1>
+    </div>
+    <div class="page-subtitle">
+      Learn more about Organization roles <a>&#8599;</a>
+    </div>
+    <input
+      class="search-box"
+      id="role-search"
+      type="text"
+      placeholder="&#128269; Search roles..."
+      value="${escHtml(searchTerm || '')}"
+      oninput="renderList(this.value)"
+    />
+    <div class="roles-grid">${cards || '<p style="color:var(--text-muted);font-size:13px">No roles match your search.</p>'}</div>
+  `;
+}
+
+function showDetail(roleName) {
+  if (!state) return;
+  const role = state.odcRoles.find(r => r.name === roleName);
+  if (!role) return;
+
+  document.getElementById('view-list').classList.add('hidden');
+  document.getElementById('view-users').classList.add('hidden');
+  document.getElementById('view-user-detail').classList.add('hidden');
+  document.getElementById('view-detail').classList.remove('hidden');
+  // First tab: 'Portfolio' for all roles; infra tab added dynamically in renderDetail
+  renderDetail(role, Object.keys(role.portfolioTabs)[0]);
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+function renderDetail(role, activeTab) {
+  const tabs = Object.keys(role.portfolioTabs);
+  // Tabs: for imported roles add the infra tab (handled via o11Perms)
+  const allTabs = role.o11Perms ? [...tabs, state.infraName] : tabs;
+  const resolvedTab = activeTab || allTabs[0];
+
+  const tabBarHtml = allTabs.map(t => {
+    const safeName = escHtml(JSON.stringify(role.name));
+    const safeTab = escHtml(JSON.stringify(t));
+    return `<div class="tab${t === resolvedTab ? ' active' : ''}" onclick="renderDetail(
+      window.__state.odcRoles.find(r=>r.name===${safeName}),
+      ${safeTab}
+    )" style="cursor:pointer">${escHtml(t)}</div>`;
+  }).join('');
+
+  // Determine content for active tab
+  let permContent;
+  if (role.o11Perms && resolvedTab === state.infraName) {
+    permContent = renderO11PortfolioTab(role.o11Perms);
+  } else {
+    const pp = role.portfolioTabs[resolvedTab] || role.portfolioTabs[tabs[0]];
+    permContent = renderPortfolioPerms(pp);
+  }
+
+  const avatarHtml = renderUserAvatars(role.users);
+
+  document.getElementById('view-detail').innerHTML = `
+    <div class="breadcrumb" onclick="showList()">&#8592; Organization roles</div>
+    <div class="role-detail-header">
+      <h1 class="role-detail-title">${escHtml(role.name)}</h1>
+      ${avatarHtml}
+    </div>
+    ${renderOrgPerms(role.orgPerms)}
+    <div class="perm-section">
+      <div class="perm-section-title">Portfolio level</div>
+      <div class="tab-bar">${tabBarHtml}</div>
+      ${permContent}
+    </div>
+  `;
+}
+
+function setSidebarActive(page) {
+  document.getElementById('sb-users').classList.remove('active');
+  document.getElementById('sb-org-roles').classList.remove('active');
+  if (page === 'users') document.getElementById('sb-users').classList.add('active');
+  else document.getElementById('sb-org-roles').classList.add('active');
+}
+
+function showList() {
+  document.getElementById('view-detail').classList.add('hidden');
+  document.getElementById('view-users').classList.add('hidden');
+  document.getElementById('view-user-detail').classList.add('hidden');
+  document.getElementById('view-list').classList.remove('hidden');
+  setSidebarActive('roles');
+  renderList('');
+}
+
+// ── Users page ────────────────────────────────────────────────────────────────
+function showUsers() {
+  if (!state) return;
+  document.getElementById('view-list').classList.add('hidden');
+  document.getElementById('view-detail').classList.add('hidden');
+  document.getElementById('view-user-detail').classList.add('hidden');
+  document.getElementById('view-users').classList.remove('hidden');
+  setSidebarActive('users');
+  renderUsersPage();
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+function renderUsersPage() {
+  if (!state) return;
+  const rows = state.odcUsers.map(u => {
+    const color = avatarColor(u.name);
+    const ini = initials(u.name);
+    const statusBadge = u.isNew
+      ? `<span class="badge-invited">Invited</span>`
+      : `<span class="badge-active">Active</span>`;
+    const lastLoginCell = u.isNew
+      ? `<span class="text-muted-cell">—</span>`
+      : escHtml(u.lastLogin || '—');
+    return `<tr onclick="showUserDetail(${escHtml(JSON.stringify(u.email))})" style="cursor:pointer">
+      <td>
+        <div class="user-cell">
+          <div class="avatar-lg" style="background:${escHtml(color)}">${escHtml(ini)}</div>
+          <div class="user-cell-info">
+            <span class="user-cell-name">${escHtml(u.name)}</span>
+            <span class="user-cell-email">${escHtml(u.email)}</span>
+          </div>
+        </div>
+      </td>
+      <td class="text-muted-cell">—</td>
+      <td>${escHtml(u.orgRole)}</td>
+      <td>${statusBadge}</td>
+      <td>${lastLoginCell}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('view-users').innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">Users</h1>
+    </div>
+    <div class="page-subtitle">Manage users and their access to this organization.</div>
+    <div class="users-table-wrap">
+      <table class="users-table">
+        <thead><tr>
+          <th>User</th>
+          <th>Username</th>
+          <th>Access</th>
+          <th>Status</th>
+          <th>Last login</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:24px">No users.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── User detail ───────────────────────────────────────────────────────────────
+function showUserDetail(email) {
+  if (!state) return;
+  document.getElementById('view-users').classList.add('hidden');
+  document.getElementById('view-user-detail').classList.remove('hidden');
+  renderUserDetail(email);
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+function renderUserDetail(email) {
+  if (!state) return;
+  const user = state.odcUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) return;
+
+  const color = avatarColor(user.name);
+  const ini = initials(user.name);
+  const statusBadge = user.isNew
+    ? `<span class="badge-invited">Invited</span>`
+    : `<span class="badge-active">Active</span>`;
+  const lastLogin = user.isNew ? '—' : (user.lastLogin || '—');
+
+  // Merge ODC portfolio assignments + O11 app assignments
+  const odcRows = (user.odcAssignments || []).map(a => `<tr>
+    <td>${escHtml(a.assetName)}</td>
+    <td>${escHtml(a.roleName)}</td>
+    <td><span class="scope-stage-badge">${escHtml(a.stage)}</span><span class="scope-portfolio-name">${escHtml(a.portfolioName)}</span></td>
+    <td>Member</td>
+    <td class="text-muted-cell">—</td>
+  </tr>`);
+  const o11Rows = (user.o11Assignments || []).map(a => `<tr>
+    <td>${escHtml(a.scopeName || a.assetName)}</td>
+    <td>${escHtml(a.roleName)}</td>
+    <td><span class="scope-stage-badge">${escHtml(a.stage)}</span><span class="scope-portfolio-name">${escHtml(a.portfolioName)}</span></td>
+    <td>Member</td>
+    <td class="text-muted-cell">—</td>
+  </tr>`);
+  const allRows = [...odcRows, ...o11Rows];
+  let assetsBody;
+  if (allRows.length === 0) {
+    assetsBody = `<div class="scope-card-body"><span class="empty-note">No asset scope assignments.</span></div>`;
+  } else {
+    assetsBody = `<table class="assets-table">
+      <thead><tr>
+        <th>Asset</th><th>Role</th><th>Scope</th><th>Membership type</th><th>Group</th>
+      </tr></thead>
+      <tbody>${allRows.join('')}</tbody>
+    </table>`;
+  }
+
+  document.getElementById('view-user-detail').innerHTML = `
+    <div class="breadcrumb" onclick="backToUsers()">&#8592; Users</div>
+    <div class="user-detail-header">
+      <div class="avatar-xl" style="background:${escHtml(color)}">${escHtml(ini)}</div>
+      <div>
+        <div class="user-detail-name-row">${escHtml(user.name)} ${statusBadge}</div>
+      </div>
+    </div>
+    <div class="user-detail-meta">
+      <div class="meta-item">
+        <span class="meta-label">Email</span>
+        <span class="meta-value">${escHtml(user.email)}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Username</span>
+        <span class="meta-value text-muted-cell">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Last login</span>
+        <span class="meta-value">${escHtml(lastLogin)}</span>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active">Organization access</div>
+      <div class="tab">End-user access</div>
+    </div>
+    <div class="scope-card">
+      <div class="scope-card-header">
+        <span class="scope-card-title">Organization scope</span>
+      </div>
+      <div class="scope-card-body">
+        <span class="org-role-link">${escHtml(user.orgRole)}</span>
+      </div>
+    </div>
+    <div class="scope-card">
+      <div class="scope-card-header">
+        <span class="scope-card-title">Assets scope</span>
+      </div>
+      ${assetsBody}
+    </div>`;
+}
+
+function backToUsers() {
+  document.getElementById('view-user-detail').classList.add('hidden');
+  document.getElementById('view-users').classList.remove('hidden');
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+// ── Main simulate action ──────────────────────────────────────────────────────
+function runSimulation() {
+  const errEl = document.getElementById('error-msg');
+  errEl.textContent = '';
+
+  let odcInput, o11Input;
+  try {
+    odcInput = JSON.parse(document.getElementById('odc-input').value);
+  } catch(e) {
+    errEl.textContent = 'ODC JSON parse error: ' + e.message;
+    return;
+  }
+  try {
+    o11Input = JSON.parse(document.getElementById('o11-input').value);
+  } catch(e) {
+    errEl.textContent = 'O11 JSON parse error: ' + e.message;
+    return;
+  }
+
+  state = simulate(odcInput, o11Input);
+  window.__state = state;
+
+  document.getElementById('nav-org-name').textContent = state.orgName;
+  document.getElementById('nav-portfolio-name').textContent = state.portfolioName + ' ▾';
+
+  document.getElementById('view-detail').classList.add('hidden');
+  document.getElementById('view-users').classList.add('hidden');
+  document.getElementById('view-user-detail').classList.add('hidden');
+  document.getElementById('view-list').classList.remove('hidden');
+  setSidebarActive('roles');
+  renderList('');
+}
+
+// ── UI controls ───────────────────────────────────────────────────────────────
+document.getElementById('load-sample-btn').addEventListener('click', () => {
+  document.getElementById('odc-input').value = JSON.stringify(SAMPLE_ODC, null, 2);
+  document.getElementById('o11-input').value = JSON.stringify(SAMPLE_O11, null, 2);
+  runSimulation();
+});
+
+document.getElementById('toggle-inputs-btn').addEventListener('click', () => {
+  const panel = document.getElementById('inputs-panel');
+  const btn = document.getElementById('toggle-inputs-btn');
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+    btn.textContent = '▲ Hide inputs';
+  } else {
+    panel.classList.add('hidden');
+    btn.textContent = '▼ Show inputs';
+  }
+});
+
+document.getElementById('simulate-btn').addEventListener('click', runSimulation);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('odc-input').value = JSON.stringify(SAMPLE_ODC, null, 2);
+document.getElementById('o11-input').value = JSON.stringify(SAMPLE_O11, null, 2);
+runSimulation();
+</script>
+</body>
+</html>
