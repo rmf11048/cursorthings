@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workshop Series</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f4f1eb; font-family: 'DM Sans', system-ui, sans-serif; }
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      background: #111; display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    #nav button {
+      flex: 1; padding: 12px 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; border: none; cursor: pointer; font-family: inherit;
+      color: rgba(255,255,255,0.4); background: transparent; transition: all 0.2s;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    #nav button:last-child { border-right: none; }
+    #nav button.active { color: #fff; background: rgba(255,255,255,0.07); }
+    #nav button:hover:not(.active) { color: rgba(255,255,255,0.7); }
+    #nav button span { display: block; font-size: 10px; font-weight: 400; opacity: 0.55; margin-top: 2px; text-transform: none; letter-spacing: 0; }
+    #root { padding-top: 48px; }
+  </style>
+</head>
+<body>
+
+<div id="nav">
+  <button id="btn-1" onclick="showWorkshop(1)">W1 <span>AX Design</span></button>
+  <button id="btn-2" onclick="showWorkshop(2)">W2 <span>HAI</span></button>
+  <button id="btn-3" onclick="showWorkshop(3)">W3 <span>Ways of Working</span></button>
+  <button id="btn-4" onclick="showWorkshop(4)">W4 <span>Quality</span></button>
+</div>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+// ─── WORKSHOP 1 ────────────────────────────────────────────────────────────────
+const W1 = { id:1, day:"Monday", title:"AX Design & Frameworks", color:"#1740a8", accent:"#e8edf8", accentDark:"#0A0D14", time:"09:00 – 13:00", audience:"5–8 people", coreQuestion:"What is AX, what do we have, and how do we practice it?", why:"Before the team can work in AX, they need a shared mental model. This session walks through the UX→UAX→AX evolution, audits existing assets, and locks in how the team will use the frameworks going forward. It's the foundational session — everything else in the week builds on the shared language established here.", goalStatement:"By 13:00, the team has a shared vocabulary, knows what assets exist, and has agreed on which models and artifacts to use going forward." };
+const W1_OUTPUTS = [
+  { text:"Agreed asset map — what exists, what's missing, what's retired", type:"artifact" },
+  { text:"Adopted methodology — which models and artifacts the team will actually use", type:"decision" },
+  { text:"Live model built for a real problem (exercise output)", type:"exercise" },
+];
+const W1_AGENDA = [
+  { time:"09:00", dur:"15 min", label:"Opening", detail:"Set context: why this week, why this session first. Frame the shift — 'the user is no longer a stable assumption.' Quick pulse check: where does each person feel they are on the UX→AX spectrum?", type:"align" },
+  { time:"09:15", dur:"45 min", label:"The UX → AX Evolution", detail:"Walk through the three navigator types (Human, Human+Agent, Agent-only) and the three process models: Triple Diamond (UX), Braided Track (UAX), Operational Lifecycle Loop (AX). Use the evolution article as the backbone. Pause at each model: where does our current work sit? This is a conversation, not a lecture.", type:"teach" },
+  { time:"10:00", dur:"30 min", label:"The Navigator Matrix", detail:"Introduce the 2×3 matrix (Interactive / Supervised / Lights-out × UX / UAX / AX). Map current OutSystems product scenarios onto the matrix together. Where do we cluster? Where are the gaps?", type:"teach" },
+  { time:"10:30", dur:"15 min", label:"Break", detail:"", type:"break" },
+  { time:"10:45", dur:"45 min", label:"Asset Audit", detail:"Hands-on: inventory all existing design assets as a group. Use the AX Design Objects mapping as a reference (screens→capabilities, navigation→discovery, forms→schemas, etc.). For each asset: classify by navigator type, assign a status (active / needs update / retire / missing). Build the map on a whiteboard or Miro.", type:"exercise" },
+  { time:"11:30", dur:"15 min", label:"Methodology Lock", detail:"Based on the audit: which models does the team adopt? Which artifacts become standard? This is a decision moment — not a discussion. Vote if needed. Write it down.", type:"decide" },
+  { time:"11:45", dur:"60 min", label:"Live Model Building", detail:"Pick one real product problem. The group builds a model for it together — Capability Card, Trust Mode Spec, or Dual-Layer Journey Map depending on the problem. Everyone contributes. This is where the framework becomes real.", type:"exercise" },
+  { time:"12:45", dur:"15 min", label:"Wrap-up & Takeaways", detail:"Photograph/capture all outputs. Each person states one thing they'll do differently starting tomorrow. Preview Tuesday's session (HAI).", type:"align" },
+];
+const W1_ASSETS = [
+  { name:"AX Design Foundations Course", desc:"9-session course covering the full UX→AX arc", url:"https://rainbow-croquembouche-8a627f.netlify.app/", status:"live", note:"A2A reference in S3 needs fixing — ACP merged into A2A" },
+  { name:"UX → AX Evolution Article", desc:"Long-form piece on the paradigm shift — the anchor narrative", url:null, status:"draft", note:"Hero paragraph added, stats bar removed, org implications section removed. Needs final publish." },
+  { name:"Navigator Matrix & Models Reference", desc:"Interactive HTML — Triple Diamond, Braided Track, Lifecycle Loop, 2×3 Matrix", url:null, status:"built", note:"ux-uax-ax-models.html — standalone file, needs hosting or screen share" },
+  { name:"AX Design Objects Mapping", desc:"10 UX→AX object pairings (screens→capabilities, navigation→discovery, etc.)", url:null, status:"built", note:"Interactive HTML with your design language" },
+  { name:"Dual Loop Model v5", desc:"UX loop + AX loop + shared intent center + HITL bridge", url:null, status:"built", note:"Animated SVG HTML — also used in Workshop 2" },
+];
+const W1_PREP = [
+  { task:"Publish the AX evolution article (internally or externally)", critical:true },
+  { task:"Fix A2A reference in AX Foundations Course S3", critical:false },
+  { task:"Host or prepare Navigator Matrix for screen share / print", critical:true },
+  { task:"Select a real product problem for the live model-building exercise", critical:true },
+  { task:"Prepare a blank Capability Card template (printable or Miro)", critical:true },
+  { task:"Book room with whiteboard or set up Miro board", critical:false },
+  { task:"Print AX Design Objects mapping as a reference handout", critical:false },
+  { task:"Send pre-read: AX evolution article + AX Foundations S1 link", critical:false },
+];
+const W1_FACILITATION = "Keep Part 1 conversational — pause after each model and ask the group where their current work sits. The 5–8 person size is ideal for the asset audit and model-building: everyone contributes, no one hides. The methodology lock at 11:30 is a decision moment — use a vote if the group doesn't converge in 10 minutes. Photograph everything on the whiteboard before leaving.";
+
+// ─── WORKSHOP 2 ────────────────────────────────────────────────────────────────
+const W2 = { id:2, day:"Tuesday", title:"Human-Agent Interaction", color:"#7c3aed", accent:"#f0ebfa", accentDark:"#0f0a1a", time:"09:00 – 13:00", audience:"5–8 people", coreQuestion:"How many loops are there, and what should we settle on?", why:"The HITL/HATL/HOTL taxonomy is central to how the team designs agent experiences, but there are 8 patterns and multiple overlapping models in the wild. This session stress-tests the model as a group, forces real decisions about which patterns matter, and locks in a shared version the team can reference going forward. The second half pivots to research: how do we prove our model works?", goalStatement:"By 13:00, the team has a locked loop model with agreed definitions, has stress-tested it against real scenarios, and has 2–3 research questions with study designs ready to run." };
+const W2_OUTPUTS = [
+  { text:"Settled loop model — agreed number of patterns, definitions, and names", type:"decision" },
+  { text:"Trust Mode Spec template — tested on a real scenario", type:"artifact" },
+  { text:"2–3 research questions with lightweight study designs", type:"artifact" },
+];
+const W2_AGENDA = [
+  { time:"09:00", dur:"15 min", label:"Opening & Recap", detail:"Quick recap of Monday's session — the Navigator Matrix and adopted methodology. Set today's frame: 'We have the what (AX). Today we decide the how much (human involvement).'", type:"align" },
+  { time:"09:15", dur:"45 min", label:"The 8-Pattern Taxonomy", detail:"Walk through each pattern from HATL (Human Approves, Then Loops) through HOOTL (Human Out Of The Loop). For each: definition, when it applies, real-world example. Use the industry × pattern matrix as a reference. Key question at the end: do we need all 8? Are some redundant?", type:"teach" },
+  { time:"10:00", dur:"30 min", label:"The Reduction Debate", detail:"This is the contested part. Challenge the group: can we collapse 8 patterns to 5? To 3? What's lost? Set a hard timer — 30 minutes to converge or vote. The facilitator's job is to force a decision, not a consensus.", type:"decide" },
+  { time:"10:30", dur:"15 min", label:"Break", detail:"", type:"break" },
+  { time:"10:45", dur:"45 min", label:"Stress Test: Real Scenarios", detail:"Take 2–3 real OutSystems product scenarios and classify them using the model the group just locked. Where does the model hold? Where does it break? What edge cases emerge? Work in pairs, then regroup. If the model breaks badly, reopen the reduction debate for 10 minutes.", type:"exercise" },
+  { time:"11:30", dur:"30 min", label:"Trust Mode Spec", detail:"Introduce the Trust Mode Spec as a design artifact. Walk through the template together: what fields, what it captures, how it connects to the loop model. Then fill one out live for one of the scenarios from the stress test.", type:"exercise" },
+  { time:"12:00", dur:"30 min", label:"Research Design", detail:"Pivot: what don't we know? The stress test will have revealed gaps — assumptions we made that need validation. As a group, identify 2–3 research questions and sketch lightweight study designs (heuristic review, user test protocol, log analysis). Assign owners.", type:"exercise" },
+  { time:"12:30", dur:"15 min", label:"Lock & Document", detail:"Write down the locked model: pattern names, definitions, when-to-use guidance. This becomes the team's reference. Assign someone to clean it up and post in Slack by EOD.", type:"decide" },
+  { time:"12:45", dur:"15 min", label:"Wrap-up", detail:"Each person states: one thing that surprised them, one thing they'll apply this week. Preview Wednesday's session (Ways of Working).", type:"align" },
+];
+const W2_ASSETS = [
+  { name:"HITL Dual Loop Model v5", desc:"Animated SVG — UX loop + AX loop + shared intent center + HITL bridge", url:null, status:"built", note:"Standalone HTML, light version. Used as visual anchor during the taxonomy walkthrough." },
+  { name:"8-Pattern Taxonomy", desc:"HATL through HOOTL — definitions, triggers, examples", url:null, status:"built", note:"Multiple formats exist (React, HTML, editorial). Need to select canonical version before the session." },
+  { name:"Industry × Pattern Matrix", desc:"10 industries mapped against 8 loop patterns", url:null, status:"built", note:"HTML grid with detail panels. Good reference during the taxonomy section." },
+  { name:"Trust Mode Spec Template", desc:"Fillable template capturing loop selection, trust boundaries, escalation rules", url:null, status:"to-create", note:"Referenced in the framework but doesn't exist as a standalone template yet. Needs to be a fillable doc (Google Doc, Miro card, or printable)." },
+  { name:"External References", desc:"NN/g on HITL patterns, Jenny Wen's AX writing, academic papers", url:null, status:"to-create", note:"Curate a short reading list — 3–5 key external sources that validate or challenge the model." },
+];
+const W2_PREP = [
+  { task:"Select canonical version of the 8-pattern taxonomy (from existing formats)", critical:true },
+  { task:"Create Trust Mode Spec as a fillable template", critical:true },
+  { task:"Prepare 2–3 real OutSystems product scenarios for the stress test", critical:true },
+  { task:"Curate external references (NN/g, Jenny Wen, academic papers)", critical:false },
+  { task:"Print/share the industry × pattern matrix as a reference", critical:false },
+  { task:"Prepare a 'reduced model' strawman (5 patterns? 3?) to seed the debate", critical:false },
+  { task:"Book room with whiteboard or set up Miro board for the stress test", critical:false },
+  { task:"Send pre-read: Dual Loop Model v5 + selected taxonomy version", critical:false },
+];
+const W2_FACILITATION = "This is the most intellectually contested session. The reduction debate at 10:00 is the crux — the group needs to make a real decision, not just discuss. Set a hard 30-minute timer. If you don't converge, vote and move on. The stress test in Part 2 will reveal if the vote was wrong — and that's fine, you can reopen for 10 minutes. The research design pivot at 12:00 is where the session earns long-term value: it turns today's decisions into testable hypotheses.";
+
+// ─── WORKSHOP 3 ────────────────────────────────────────────────────────────────
+const W3 = { id:3, day:"Wednesday", title:"Ways of Working", color:"#0d7c66", accent:"#e6f5f0", accentDark:"#06120f", time:"09:00 – 13:00", audience:"5–8 people", coreQuestion:"How do we work with AI as designers — practically, daily?", why:"Tools like Claude, Cursor, and Git are transforming design workflows, but adoption is uneven across the team. This session is 100% hands-on: everyone builds something real with AI tools during the session, then the group agrees on shared workflows and makes personal commitments. No theory — just practice.", goalStatement:"By 13:00, every person has completed a real task with AI tools, the team has written workflow agreements, and each person has a 30-day commitment with an accountability buddy." };
+const W3_OUTPUTS = [
+  { text:"Shared workflow agreements — what tools, when, how", type:"decision" },
+  { text:"Pattern list — what worked, what didn't, what surprised us", type:"artifact" },
+  { text:"Each person's 30-day personal commitment", type:"artifact" },
+  { text:"Seed prompt library with 5+ team-contributed templates", type:"artifact" },
+];
+const W3_AGENDA = [
+  { time:"09:00", dur:"15 min", label:"Opening & Setup Check", detail:"Verify everyone's tools are installed and working: Claude account, Cursor (if applicable), Git basics. Troubleshoot now — not during the exercises. Quick show of hands: who's used AI tools for design work this week?", type:"align" },
+  { time:"09:15", dur:"30 min", label:"Video Discussion", detail:"Discuss the 2–3 Supermodular videos assigned as pre-work. What resonated? What felt unrealistic? What's applicable to our context? This grounds the session in what's possible, not what's hypothetical.", type:"teach" },
+  { time:"09:45", dur:"75 min", label:"Hands-on: Do Real Work with AI", detail:"Everyone picks a real task from their current backlog — not a toy exercise. Use Claude Projects, Cursor, or whatever tool fits. Examples: write a spec, generate a prototype, audit an interface, create a presentation. Facilitator circulates, helps unblock, takes notes on patterns.", type:"exercise" },
+  { time:"11:00", dur:"15 min", label:"Break", detail:"", type:"break" },
+  { time:"11:15", dur:"30 min", label:"Share-out & Pattern Extraction", detail:"Each person shares: what they tried, what happened, what surprised them. Group extracts patterns together: what works well with AI? Where does it struggle? Where do you still need human craft? Write patterns on the whiteboard.", type:"exercise" },
+  { time:"11:45", dur:"30 min", label:"Workflow Agreements", detail:"Draft workflow agreements as a team: When do we use Claude? When Cursor? What goes in Git? How do we review AI-assisted work? How do we handle prompts — personal or shared? These become team norms.", type:"decide" },
+  { time:"12:15", dur:"20 min", label:"Prompt Library Seeding", detail:"Each person contributes at least one prompt template or Claude Project setup to a shared library. Can be the prompt they just used, refined. Store in an agreed location (Slack channel, Notion, shared doc).", type:"exercise" },
+  { time:"12:35", dur:"15 min", label:"30-Day Commitments", detail:"Each person writes a personal commitment: one specific way they'll use AI tools over the next 30 days. Pair up as accountability buddies. Set a check-in date (2 weeks out).", type:"decide" },
+  { time:"12:50", dur:"10 min", label:"Wrap-up", detail:"Preview Thursday's session (Quality). Remind: bring your best work and your biggest quality concern.", type:"align" },
+];
+const W3_ASSETS = [
+  { name:"Supermodular Video Series", desc:"External videos on AI-assisted design workflows — assigned as pre-work", url:null, status:"to-create", note:"Need to package 2–3 specific video links and share 1 week before the session" },
+  { name:"Tool Setup Guides", desc:"Step-by-step guides for Claude, Cursor, and Git basics", url:null, status:"to-create", note:"Must be written and tested end-to-end. Test on someone who hasn't used these tools." },
+  { name:"UX Checker Claude Project", desc:"Working example of a Claude Project prompt — can demo as 'here's what a good setup looks like'", url:null, status:"live", note:"The Delightful Score V2 system prompt. Good reference for what a well-structured Claude Project looks like." },
+  { name:"Seed Prompt Library", desc:"5–10 starter Claude Project templates for common design tasks", url:null, status:"to-create", note:"Examples: spec writing, heuristic review, competitive analysis, copy editing, accessibility audit" },
+  { name:"Workflow Agreement Template", desc:"Blank template for the team to fill in during the session", url:null, status:"to-create", note:"Simple format: 'For [task type], we use [tool], because [reason], reviewed by [who]'" },
+];
+const W3_PREP = [
+  { task:"Write and test tool setup guides (Claude, Cursor, Git basics)", critical:true },
+  { task:"Build seed prompt library (5–10 templates for common design tasks)", critical:true },
+  { task:"Package Supermodular video links — select 2–3, share as pre-work 1 week before", critical:true },
+  { task:"Create blank workflow agreement template", critical:true },
+  { task:"Test the wifi — everyone will run AI tools simultaneously", critical:true },
+  { task:"Have everyone pre-install tools the day before (send instructions Monday)", critical:false },
+  { task:"Prepare a backup task list in case someone doesn't have a backlog item ready", critical:false },
+  { task:"Set up shared location for prompt library (Slack channel, Notion, or shared doc)", critical:false },
+];
+const W3_FACILITATION = "This workshop has the most prep of all four. The setup guides must work flawlessly — nothing kills momentum faster than 30 minutes of debugging installs. Have everyone pre-install tools on Tuesday. The 75-minute hands-on block is the core of the session: real work, not demos. Circulate and take notes on what people struggle with — those struggles become the patterns. The share-out is where the magic happens: real stories from 30 minutes ago, not hypotheticals.";
+
+// ─── WORKSHOP 4 ────────────────────────────────────────────────────────────────
+const W4 = { id:4, day:"Thursday", title:"Quality, Impact & Influence", color:"#b06020", accent:"#faf0e6", accentDark:"#1a0f06", time:"09:00 – 13:00", audience:"5–8 people", coreQuestion:"How do we raise the bar and make the case?", why:"You can have the tightest quality framework in the industry and it won't matter if stakeholders don't care. This session does both: calibrate the team's quality eye using the Delightful Score V2, run a live competitive bakeoff, then turn the scores into a stakeholder pitch. The team walks out with evidence and the ability to sell it.", goalStatement:"By 13:00, the team has calibrated quality gates, produced a competitive bakeoff report, and built a ready-to-deliver stakeholder pitch backed by evidence." };
+const W4_OUTPUTS = [
+  { text:"Quality gates — UX, UI, and design quality gates with owners and triggers", type:"decision" },
+  { text:"Competitive bakeoff report — OutSystems vs. 3+ competitors, scored", type:"artifact" },
+  { text:"Stakeholder pitch — a 5-slide narrative that turns evidence into action", type:"artifact" },
+];
+const W4_AGENDA = [
+  { time:"09:00", dur:"15 min", label:"Opening & Week Recap", detail:"Brief recap of Monday–Wednesday: the vocabulary (W1), the model (W2), the tools (W3). Frame today: 'We know what AX is, how humans and agents interact, and how to work with AI. Now: how do we prove our work is good, and how do we sell that to leadership?'", type:"align" },
+  { time:"09:15", dur:"30 min", label:"The Delightful Score V2", detail:"Introduce the framework: 35 elements across 5 dimensions (App Performance, Easy Entry, Ease of Use, User Interface, Native Feel). Walk through the scoring model. Explain how each element maps to an NN/g heuristic. This is the team's shared quality language.", type:"teach" },
+  { time:"09:45", dur:"30 min", label:"Calibration Exercise", detail:"Everyone scores the same app independently using the Delightful Score. Compare results. Where do people diverge? The divergences are the conversation — they reveal where the team's quality intuition differs. Align on scoring norms.", type:"exercise" },
+  { time:"10:15", dur:"15 min", label:"Break", detail:"", type:"break" },
+  { time:"10:30", dur:"45 min", label:"Live Bakeoff", detail:"Run the competitive bakeoff: 3–4 competitor apps scored side-by-side using the UX Bakeoff tool. Split into pairs — each pair takes one competitor. Regroup and compare. Where is OutSystems ahead? Where is it embarrassingly behind?", type:"exercise" },
+  { time:"11:15", dur:"30 min", label:"Quality Gates", detail:"Based on the bakeoff results and calibration: define quality gates. What must be true before shipping? Format: gate name, pass/fail criteria, owner, trigger point. These become team standards — not aspirational, enforceable.", type:"decide" },
+  { time:"11:45", dur:"45 min", label:"Build the Pitch", detail:"The pivot to influence. Using the bakeoff data, build a 5-slide stakeholder pitch together. Structure: (1) The Problem — what the data shows, (2) The Evidence — bakeoff scores and gaps, (3) The Cost of Inaction — what we lose, (4) The Gates — what we're committing to, (5) The Ask — what we need from leadership. Practice delivering it.", type:"exercise" },
+  { time:"12:30", dur:"15 min", label:"Delivery Practice", detail:"One person delivers the pitch to the group. Everyone else plays the skeptical stakeholder. Refine based on the pushback. Assign who delivers it for real — and when.", type:"exercise" },
+  { time:"12:45", dur:"15 min", label:"Week Wrap-up", detail:"Close the full workshop week. Each person: one commitment from this week they'll act on starting Monday. Capture all outputs from all four sessions. Set a 2-week check-in to review progress.", type:"align" },
+];
+const W4_ASSETS = [
+  { name:"Delightful Score V2 Framework", desc:"35 elements across 5 dimensions — the scoring backbone", url:null, status:"live", note:"System prompt exists and is tested. Each element maps to an NN/g heuristic." },
+  { name:"UX Checker (Claude Project)", desc:"Single-app scoring tool — used for the calibration exercise", url:null, status:"live", note:"Working Claude Project prompt. Upload screenshots, get a scored analysis." },
+  { name:"UX Bakeoff Tool", desc:"Competitive analysis — multiple apps scored and compared side-by-side", url:null, status:"live", note:"React artifact with radar charts, score cards, and comparative recommendations." },
+  { name:"Quality Gates Template", desc:"Blank template: gate name, pass/fail criteria, owner, trigger point", url:null, status:"to-create", note:"Simple table format. Could be a shared doc or Miro board." },
+  { name:"Pitch Deck Template (5 slides)", desc:"Structure: Problem → Evidence → Cost of Inaction → Gates → Ask", url:null, status:"to-create", note:"Keynote/Google Slides template with the 5-slide structure pre-built." },
+];
+const W4_PREP = [
+  { task:"Select 3–4 competitor apps for the bakeoff (e.g., Retool, Mendix, PowerApps, Appian)", critical:true },
+  { task:"Prepare screenshots and/or access credentials for each competitor", critical:true },
+  { task:"Select one app for the calibration exercise (something everyone can evaluate)", critical:true },
+  { task:"Create quality gates template (table format)", critical:true },
+  { task:"Create 5-slide pitch deck template", critical:false },
+  { task:"Do a dry run of the UX Checker and Bakeoff tool", critical:true },
+  { task:"Prepare a 'stakeholder persona' brief for the pitch practice (who are we pitching to?)", critical:false },
+  { task:"Print Delightful Score V2 element list as a scoring reference handout", critical:false },
+];
+const W4_FACILITATION = "The calibration exercise is key — if people score wildly differently, that *is* the conversation. Don't rush past disagreement; it reveals where quality intuition differs. The bakeoff should feel competitive and slightly uncomfortable: 'where are we behind?' is more useful than 'where are we great.' The pitch-building should feel urgent: imagine you're presenting to the CPO tomorrow. With 5–8 people, everyone contributes to the pitch — assign slides, not roles.";
+
+// ─── SHARED ────────────────────────────────────────────────────────────────────
+const STATUS_STYLES = {
+  live:      { label:"Live",      bg:"#dcfce7", fg:"#166534" },
+  built:     { label:"Built",     bg:"#dbeafe", fg:"#1e40af" },
+  draft:     { label:"Draft",     bg:"#fef9c3", fg:"#854d0e" },
+  "to-create":{ label:"To Create", bg:"#fee2e2", fg:"#991b1b" },
+};
+const OUTPUT_ICONS = { artifact:"◆", decision:"●", exercise:"▲" };
+const TABS = ["plan","agenda","assets","prep"];
+
+function typeColors(wColor) {
+  return {
+    teach:    { bg: wColor + "22", fg: wColor, label:"Teach" },
+    exercise: { bg:"#dcfce7", fg:"#166534", label:"Hands-on" },
+    decide:   { bg:"#fef9c3", fg:"#854d0e", label:"Decision" },
+    align:    { bg:"#f3e8ff", fg:"#6b21a8", label:"Align" },
+    break:    { bg:"#f5f5f4", fg:"#9090aa", label:"Break" },
+  };
+}
+
+function Workshop({ W, outputs, agenda, assets, prep, facilitation }) {
+  const [tab, setTab] = useState("plan");
+  const [checked, setChecked] = useState({});
+  const toggle = (i) => setChecked(p => ({ ...p, [i]: !p[i] }));
+  const doneCount = Object.values(checked).filter(Boolean).length;
+  const TC = typeColors(W.color);
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#f4f1eb", fontFamily:"'DM Sans', system-ui, sans-serif", color:"#1a1a2e" }}>
+      {/* Hero */}
+      <div style={{ background: W.accentDark, color:"#f4f1eb", padding:"48px 32px 0" }}>
+        <div style={{ maxWidth:720, margin:"0 auto" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+            <div style={{ width:40, height:40, borderRadius:10, background:W.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:700, color:"#fff" }}>{W.id}</div>
+            <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.12em", textTransform:"uppercase", opacity:0.4 }}>{W.day} · {W.time} · {W.audience}</div>
+          </div>
+          <h1 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:40, fontWeight:600, margin:"0 0 10px", lineHeight:1.15 }}>{W.title}</h1>
+          <p style={{ fontSize:15, opacity:0.5, lineHeight:1.6, maxWidth:540, marginBottom:28 }}>{W.coreQuestion}</p>
+          <div style={{ display:"flex", gap:4 }}>
+            {TABS.map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{
+                padding:"8px 20px", fontSize:13, fontWeight:500, fontFamily:"inherit",
+                border:"none", borderRadius:"6px 6px 0 0", cursor:"pointer",
+                background: tab===t ? "#f4f1eb" : "rgba(255,255,255,0.06)",
+                color: tab===t ? "#1a1a2e" : "rgba(255,255,255,0.35)", transition:"all 0.2s",
+              }}>
+                {t==="plan"?"Overview":t==="agenda"?"Agenda":t==="assets"?"Assets":"Prep"}
+                {t==="prep" && <span style={{ marginLeft:6, fontSize:10, opacity:0.6 }}>{doneCount}/{prep.length}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth:720, margin:"0 auto", padding:"28px 32px 60px" }}>
+
+        {/* PLAN */}
+        {tab==="plan" && (
+          <div>
+            <div style={{ background:W.accent, borderRadius:10, padding:"18px 22px", borderLeft:`3px solid ${W.color}`, marginBottom:24 }}>
+              <div style={{ fontSize:11, fontWeight:600, color:W.color, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Session Goal</div>
+              <div style={{ fontSize:15, fontWeight:500, lineHeight:1.5 }}>{W.goalStatement}</div>
+            </div>
+            <p style={{ fontSize:14, lineHeight:1.7, color:"#4a4a6a", marginBottom:28 }}>{W.why}</p>
+
+            <h3 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:22, fontWeight:600, marginBottom:14 }}>What the team walks out with</h3>
+            <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:32 }}>
+              {outputs.map((o,i) => (
+                <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"14px 18px", background:"#fff", borderRadius:8, border:"1px solid rgba(0,0,0,0.06)" }}>
+                  <span style={{ color:W.color, fontSize:16, marginTop:1 }}>{OUTPUT_ICONS[o.type] || "◆"}</span>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:500, lineHeight:1.5 }}>{o.text}</div>
+                    <div style={{ fontSize:11, color:"#9090aa", marginTop:2, textTransform:"uppercase", letterSpacing:"0.06em" }}>{o.type}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h3 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:22, fontWeight:600, marginBottom:14 }}>At a glance</h3>
+            <div style={{ background:"#fff", borderRadius:10, padding:"16px 20px", border:"1px solid rgba(0,0,0,0.06)" }}>
+              {agenda.map((a,i) => (
+                <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"8px 0", borderBottom: i<agenda.length-1?"1px solid rgba(0,0,0,0.04)":"none", opacity: a.type==="break"?0.5:1 }}>
+                  <span style={{ fontSize:12, color:"#9090aa", width:44, flexShrink:0, fontVariantNumeric:"tabular-nums" }}>{a.time}</span>
+                  <span style={{ fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:4, background:TC[a.type].bg, color:TC[a.type].fg, textTransform:"uppercase", letterSpacing:"0.04em", flexShrink:0 }}>{TC[a.type].label}</span>
+                  <span style={{ fontSize:13, fontWeight:500 }}>{a.label}</span>
+                  <span style={{ fontSize:11, color:"#9090aa", marginLeft:"auto", flexShrink:0 }}>{a.dur}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop:28, padding:"16px 20px", background:"#fefdfb", borderRadius:10, border:"1px dashed rgba(0,0,0,0.1)" }}>
+              <div style={{ fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"#9090aa", marginBottom:6 }}>Facilitation Notes</div>
+              <p style={{ fontSize:13, lineHeight:1.6, color:"#4a4a6a", margin:0 }}>{facilitation}</p>
+            </div>
+          </div>
+        )}
+
+        {/* AGENDA */}
+        {tab==="agenda" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {agenda.map((a,i) => (
+              <div key={i} style={{
+                background: a.type==="break"?"#f8f7f5":"#fff", borderRadius:10,
+                padding: a.type==="break"?"12px 20px":"18px 22px",
+                border:"1px solid rgba(0,0,0,0.06)",
+                borderLeft: a.type!=="break"?`3px solid ${TC[a.type].fg}`:"1px solid rgba(0,0,0,0.06)",
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: a.detail?8:0 }}>
+                  <span style={{ fontSize:13, fontWeight:600, fontVariantNumeric:"tabular-nums" }}>{a.time}</span>
+                  <span style={{ fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:4, background:TC[a.type].bg, color:TC[a.type].fg, textTransform:"uppercase", letterSpacing:"0.04em" }}>{TC[a.type].label}</span>
+                  <span style={{ fontSize:15, fontWeight:600 }}>{a.label}</span>
+                  <span style={{ fontSize:12, color:"#9090aa", marginLeft:"auto" }}>{a.dur}</span>
+                </div>
+                {a.detail && <p style={{ fontSize:13, lineHeight:1.6, color:"#4a4a6a", margin:0 }}>{a.detail}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ASSETS */}
+        {tab==="assets" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <p style={{ fontSize:14, color:"#4a4a6a", lineHeight:1.6, marginBottom:8 }}>Everything needed for this session. Status indicates readiness.</p>
+            {assets.map((a,i) => {
+              const s = STATUS_STYLES[a.status];
+              return (
+                <div key={i} style={{ background:"#fff", borderRadius:10, padding:"18px 22px", border:"1px solid rgba(0,0,0,0.06)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+                    <span style={{ fontSize:10, fontWeight:600, padding:"2px 10px", borderRadius:4, background:s.bg, color:s.fg, textTransform:"uppercase", letterSpacing:"0.04em" }}>{s.label}</span>
+                    <h4 style={{ fontSize:15, fontWeight:600, margin:0 }}>
+                      {a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color:W.color, textDecoration:"none", borderBottom:`1px solid ${W.color}40` }}>{a.name}</a> : a.name}
+                    </h4>
+                  </div>
+                  <p style={{ fontSize:13, color:"#4a4a6a", margin:"0 0 4px", lineHeight:1.5 }}>{a.desc}</p>
+                  {a.note && <p style={{ fontSize:12, color:"#9090aa", margin:0, fontStyle:"italic", lineHeight:1.5 }}>{a.note}</p>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* PREP */}
+        {tab==="prep" && (
+          <div>
+            <div style={{ background:"#fff", borderRadius:10, padding:"18px 22px", marginBottom:16, border:"1px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:10 }}>
+                <span style={{ fontSize:14, fontWeight:600 }}>Prep Progress</span>
+                <span style={{ fontSize:13, color:"#9090aa" }}>{doneCount} / {prep.length}</span>
+              </div>
+              <div style={{ height:8, background:"#e8e5df", borderRadius:4, overflow:"hidden" }}>
+                <div style={{ height:"100%", borderRadius:4, transition:"width 0.3s", width:`${(doneCount/prep.length)*100}%`, background: doneCount===prep.length?"#16a34a":W.color }} />
+              </div>
+            </div>
+            <div style={{ background:"#fff", borderRadius:10, padding:"8px 22px", border:"1px solid rgba(0,0,0,0.06)" }}>
+              {prep.map((p,i) => {
+                const done = checked[i];
+                return (
+                  <label key={i} style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"12px 0", cursor:"pointer", borderBottom: i<prep.length-1?"1px solid rgba(0,0,0,0.04)":"none" }}>
+                    <input type="checkbox" checked={!!done} onChange={() => toggle(i)} style={{ marginTop:2, accentColor:W.color, width:16, height:16, cursor:"pointer" }} />
+                    <div style={{ flex:1 }}>
+                      <span style={{ fontSize:14, lineHeight:1.5, color: done?"#9090aa":"#1a1a2e", textDecoration: done?"line-through":"none" }}>{p.task}</span>
+                      {p.critical && !done && <span style={{ marginLeft:8, fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:3, background:"#fee2e2", color:"#991b1b", textTransform:"uppercase", letterSpacing:"0.04em", verticalAlign:"middle" }}>Critical</span>}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── APP SHELL ─────────────────────────────────────────────────────────────────
+function App() {
+  const [active, setActive] = useState(1);
+  window.__setWorkshop = setActive;
+
+  const workshops = {
+    1: <Workshop W={W1} outputs={W1_OUTPUTS} agenda={W1_AGENDA} assets={W1_ASSETS} prep={W1_PREP} facilitation={W1_FACILITATION} />,
+    2: <Workshop W={W2} outputs={W2_OUTPUTS} agenda={W2_AGENDA} assets={W2_ASSETS} prep={W2_PREP} facilitation={W2_FACILITATION} />,
+    3: <Workshop W={W3} outputs={W3_OUTPUTS} agenda={W3_AGENDA} assets={W3_ASSETS} prep={W3_PREP} facilitation={W3_FACILITATION} />,
+    4: <Workshop W={W4} outputs={W4_OUTPUTS} agenda={W4_AGENDA} assets={W4_ASSETS} prep={W4_PREP} facilitation={W4_FACILITATION} />,
+  };
+
+  return workshops[active];
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+<script>
+function showWorkshop(n) {
+  document.querySelectorAll("#nav button").forEach((b,i) => b.classList.toggle("active", i===n-1));
+  if (window.__setWorkshop) window.__setWorkshop(n);
+}
+// Activate first on load
+window.addEventListener("DOMContentLoaded", () => showWorkshop(1));
+</script>
+</body>
+</html>
