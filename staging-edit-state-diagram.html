@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staging Edit — User Journeys &amp; State Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f0f2f5;
+    padding: 40px 32px;
+    color: #1a1a2e;
+    line-height: 1.5;
+  }
+
+  /* ── Typography ── */
+  .page-title { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .page-sub   { font-size: 14px; color: #6b7280; margin-top: 4px; margin-bottom: 40px; }
+  .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #9ca3af; margin-bottom: 16px;
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1.5px solid #e5e7eb; margin: 40px 0; }
+
+  /* ══════════════════════════════════
+     JOBS TO BE DONE
+  ══════════════════════════════════ */
+  .jtbd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .jtbd-card {
+    background: white;
+    border-radius: 12px;
+    border: 1.5px solid #e5e7eb;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .jtbd-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
+  .jtbd-card .j-index {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--accent); margin-bottom: 8px;
+  }
+  .jtbd-card .j-title {
+    font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 8px;
+  }
+  .jtbd-card .j-jtbd {
+    font-size: 12px; color: #6b7280; font-style: italic;
+    border-left: 3px solid var(--accent-light);
+    padding-left: 10px; margin-bottom: 14px; line-height: 1.6;
+  }
+  .jtbd-card .j-steps-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 8px;
+  }
+  .jtbd-card .j-steps { list-style: none; }
+  .jtbd-card .j-steps li {
+    font-size: 12px; color: #374151;
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .jtbd-card .j-steps li:last-child { border-bottom: none; }
+  .jtbd-card .j-steps li .step-num {
+    background: var(--accent-light); color: var(--accent);
+    font-size: 10px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .jtbd-card .j-exits {
+    margin-top: 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .jtbd-card .j-exit {
+    font-size: 11px; font-weight: 500;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--accent-light); color: var(--accent);
+  }
+
+  /* colour themes per journey */
+  .j1 { --accent: #3730a3; --accent-light: #eef2ff; }
+  .j2 { --accent: #0369a1; --accent-light: #e0f2fe; }
+  .j3 { --accent: #b45309; --accent-light: #fffbeb; }
+  .j4 { --accent: #b91c1c; --accent-light: #fef2f2; }
+  .j5 { --accent: #166534; --accent-light: #f0fdf4; }
+  .j6 { --accent: #6b7280; --accent-light: #f3f4f6; }
+  .j7 { --accent: #7c3aed; --accent-light: #f5f3ff; }
+
+  /* ══════════════════════════════════
+     STATE DIAGRAM
+  ══════════════════════════════════ */
+  .diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .node {
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 140px;
+    max-width: 200px;
+    position: relative;
+    z-index: 2;
+    line-height: 1.4;
+  }
+  .node .icon  { font-size: 18px; display: block; margin-bottom: 4px; }
+  .node .label { display: block; }
+  .node .sublabel { font-size: 11px; font-weight: 400; opacity: 0.75; display: block; margin-top: 2px; }
+
+  .node-start    { background: #1a1a2e; color: white; border: none; }
+  .node-page     { background: white; color: #1a1a2e; border: 2px solid #d0d5dd; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .node-action   { background: #eef2ff; color: #3730a3; border: 2px solid #c7d2fe; }
+  .node-warn     { background: #fef9c3; border: 2px solid #fde047; color: #713f12; }
+  .node-needval  { background: #fffbeb; border: 2px solid #fde68a; color: #92400e; }
+  .node-ok       { background: #f0fdf4; color: #166534; border: 2px solid #bbf7d0; }
+  .node-error    { background: #fef2f2; color: #991b1b; border: 2px solid #fecaca; }
+  .node-blocked  { background: #f9fafb; color: #6b7280; border: 2px dashed #d1d5db; }
+  .node-exit     { background: #1a1a2e; color: white; border: none; }
+  .node-exit-sec { background: #6b7280; color: white; border: none; }
+
+  .panel {
+    background: white;
+    border: 2px solid #d0d5dd;
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 580px;
+    max-width: 700px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: #9ca3af; margin-bottom: 12px;
+  }
+  .panel-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .panel-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .panel-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+
+  .chip {
+    border-radius: 7px; padding: 8px 12px;
+    font-size: 12px; font-weight: 500; line-height: 1.4;
+  }
+  .chip .c-label { font-weight: 600; display: block; }
+  .chip .c-sub   { font-weight: 400; font-size: 11px; display: block; margin-top: 2px; opacity: 0.85; }
+
+  .chip-neutral  { background: #f3f4f6; color: #374151; border: 1.5px solid #e5e7eb; }
+  .chip-blue     { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe; }
+  .chip-green    { background: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0; }
+  .chip-yellow   { background: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; }
+  .chip-orange   { background: #fff7ed; color: #9a3412; border: 1.5px solid #fed7aa; }
+  .chip-red      { background: #fef2f2; color: #991b1b; border: 1.5px solid #fecaca; }
+  .chip-gray     { background: #f9fafb; color: #6b7280; border: 1.5px dashed #d1d5db; }
+
+  .alert-yellow {
+    font-size: 11px; color: #92400e; background: #fffbeb;
+    border: 1.5px solid #fde68a; border-radius: 6px;
+    padding: 8px 12px; margin-top: 10px; line-height: 1.6;
+  }
+  .alert-yellow strong { color: #78350f; }
+
+  /* arrows */
+  .arrow-down {
+    width: 2px; background: #94a3b8;
+    height: 28px; margin: 0 auto; position: relative;
+  }
+  .arrow-down::after {
+    content: ''; position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #94a3b8;
+  }
+  .arrow-label {
+    font-size: 11px; color: #6b7280; font-style: italic;
+    text-align: center; margin: -4px 0 4px;
+  }
+
+  /* exits */
+  .exits { display: flex; gap: 20px; justify-content: center; align-items: flex-start; }
+  .exit-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .exit-label { font-size: 11px; color: #6b7280; font-style: italic; margin-bottom: 4px; text-align: center; }
+
+  /* side note */
+  .side-note {
+    position: absolute; right: 16px; top: 24px;
+    background: #f9fafb; border: 2px dashed #d1d5db;
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 12px; color: #6b7280;
+    max-width: 170px; line-height: 1.5; z-index: 3;
+  }
+  .side-note strong { display: block; margin-bottom: 4px; color: #374151; }
+
+  .rel-wrap { position: relative; width: 100%; display: flex; justify-content: center; }
+
+  /* legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    padding: 16px 20px; background: white;
+    border-radius: 10px; border: 1.5px solid #e5e7eb;
+    font-size: 12px; margin-top: 32px;
+  }
+  .legend-title { width: 100%; font-weight: 600; font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.6px; }
+  .legend-item  { display: flex; align-items: center; gap: 6px; }
+  .legend-dot   { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+
+  /* journey tag pill on chips */
+  .j-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Staging Edit — User Journeys &amp; Page State Diagram</div>
+<p class="page-sub">LifeTime Deployment Plan Editor · Analysis for UI porting</p>
+
+<!-- ══════════════════════════════════
+     SECTION 1 — JOBS TO BE DONE
+══════════════════════════════════ -->
+<div class="section-title">User Journeys &amp; Jobs to Be Done</div>
+
+<div class="jtbd-grid">
+
+  <!-- J1 -->
+  <div class="jtbd-card j1">
+    <div class="j-index">Journey 1</div>
+    <div class="j-title">Build a new deployment plan</div>
+    <div class="j-jtbd">
+      "When I need to ship a new release, I want to assemble a list of apps and target versions in one place, so that I have a clear and repeatable plan before anything runs."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Enter the Edit page from a new or saved draft plan</li>
+      <li><span class="step-num">2</span>Add applications one by one or bulk-add all</li>
+      <li><span class="step-num">3</span>Review the default deployment option selected per app</li>
+      <li><span class="step-num">4</span>Optionally change version or skip individual apps</li>
+      <li><span class="step-num">5</span>Save the plan for later or proceed to validation</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Save Plan</span>
+      <span class="j-exit">→ Validate Now</span>
+    </div>
+  </div>
+
+  <!-- J2 -->
+  <div class="jtbd-card j2">
+    <div class="j-index">Journey 2</div>
+    <div class="j-title">Validate a plan before deploying</div>
+    <div class="j-jtbd">
+      "When my plan is assembled, I want to run a validation so I can catch dependency conflicts and version mismatches before they cause runtime errors in production."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Plan is in NeedValidation state</li>
+      <li><span class="step-num">2</span>Click "Validate Now"</li>
+      <li><span class="step-num">3</span>Wait for validation to complete ("Validating…")</li>
+      <li><span class="step-num">4</span>Review per-app results in each row</li>
+      <li><span class="step-num">5</span>If all OK → Continue to Confirm step</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Continue</span>
+      <span class="j-exit">→ Fix errors first</span>
+    </div>
+  </div>
+
+  <!-- J3 -->
+  <div class="jtbd-card j3">
+    <div class="j-index">Journey 3</div>
+    <div class="j-title">Resolve warnings before deploying</div>
+    <div class="j-jtbd">
+      "When validation returns warnings on some apps, I want to understand what's at risk and decide whether to adjust options or accept the risk, so that I deploy intentionally."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Validation completes with warnings on one or more rows</li>
+      <li><span class="step-num">2</span>Expand the affected row's options panel</li>
+      <li><span class="step-num">3</span>Click "Show Details" to open the file diff / comparison popup</li>
+      <li><span class="step-num">4</span>Optionally switch to a different version option</li>
+      <li><span class="step-num">5</span>Re-validate, then continue</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Re-validate</span>
+      <span class="j-exit">→ Continue with warnings</span>
+    </div>
+  </div>
+
+  <!-- J4 -->
+  <div class="jtbd-card j4">
+    <div class="j-index">Journey 4</div>
+    <div class="j-title">Fix or override validation errors</div>
+    <div class="j-jtbd">
+      "When validation returns hard errors, I want to understand what's broken and either fix the plan or consciously force-deploy, so that I'm not blindsided at execution time."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Validation completes with errors — action bar shows "Errors" state</li>
+      <li><span class="step-num">2</span>Click "Fix Errors in Selection" — page scrolls to first errored row</li>
+      <li><span class="step-num">3</span>Expand row, read ModuleInconsistencyMessage / InconsistencyType</li>
+      <li><span class="step-num">4</span>Either: change option (re-validate) or accept error</li>
+      <li><span class="step-num">5</span>If errors remain: "Continue with errors" becomes available</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Re-validate after fix</span>
+      <span class="j-exit">→ Continue with errors</span>
+    </div>
+  </div>
+
+  <!-- J5 -->
+  <div class="jtbd-card j5">
+    <div class="j-index">Journey 5</div>
+    <div class="j-title">Save and resume later</div>
+    <div class="j-jtbd">
+      "When I'm not ready to deploy now, I want to save my plan in progress so I can come back later without losing my app selection and option choices."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Build or adjust the plan (apps, options)</li>
+      <li><span class="step-num">2</span>Click "Save Plan"</li>
+      <li><span class="step-num">3</span>Page stays open — plan is persisted</li>
+      <li><span class="step-num">4</span>User can return later via the Stagings List</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Stay on page</span>
+      <span class="j-exit">→ Leave &amp; return later</span>
+    </div>
+  </div>
+
+  <!-- J6 -->
+  <div class="jtbd-card j6">
+    <div class="j-index">Journey 6</div>
+    <div class="j-title">Discard a plan</div>
+    <div class="j-jtbd">
+      "When a plan is no longer needed or was created by mistake, I want to discard it cleanly so I can start fresh without clutter."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Click "Discard Plan"</li>
+      <li><span class="step-num">2</span>Confirm dialog: "Discard the current plan?"</li>
+      <li><span class="step-num">3</span>Plan is deleted</li>
+      <li><span class="step-num">4</span>Redirected to Stagings List</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Stagings List</span>
+    </div>
+  </div>
+
+  <!-- J7 -->
+  <div class="jtbd-card j7">
+    <div class="j-index">Journey 7</div>
+    <div class="j-title">Understand why the page is blocked</div>
+    <div class="j-jtbd">
+      "When I open a plan and can't do anything, I want to know exactly why I'm blocked so that I know what to fix or when to come back."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Page loads — error banner shown at top</li>
+      <li><span class="step-num">2</span>Either: source/target environment in maintenance mode</li>
+      <li><span class="step-num">3</span>Or: ongoing publish in target env (with "here" link to more info)</li>
+      <li><span class="step-num">4</span>All actions (Continue, Save, Add app) are disabled</li>
+      <li><span class="step-num">5</span>User must wait or fix the environment condition</li>
+    </ul>
+    <div class="j-exits">
+      <span class="j-exit">→ Wait / fix env</span>
+    </div>
+  </div>
+
+  <!-- J8 -->
+  <div class="jtbd-card" style="--accent:#0f766e; --accent-light:#f0fdfa;">
+    <div class="j-index">Journey 8</div>
+    <div class="j-title">Add more apps to an existing plan</div>
+    <div class="j-jtbd">
+      "When a deployment plan already exists with some apps, and I realise another app also needs to go out, I want to add it to the existing plan so I don't have to start over or run two separate deployments."
+    </div>
+    <div class="j-steps-title">Steps</div>
+    <ul class="j-steps">
+      <li><span class="step-num">1</span>Open an existing draft plan — already has apps and may have prior validation results</li>
+      <li><span class="step-num">2</span>Click "Add Applications" to open the app picker</li>
+      <li><span class="step-num">3</span>Select the additional app(s) and confirm</li>
+      <li><span class="step-num">4</span>New rows appear in the list alongside existing ones — plan enters NeedValidation state</li>
+      <li><span class="step-num">5</span>Previous validation results on existing rows are now stale — entire plan must be re-validated</li>
+      <li><span class="step-num">6</span>Click "Validate Now" to re-validate all apps together</li>
+      <li><span class="step-num">7</span>Review results across all rows (old and new)</li>
+      <li><span class="step-num">8</span>Save or continue to deploy</li>
+    </ul>
+    <div style="font-size:11px; color:#0f766e; background:#f0fdfa; border:1.5px solid #99f6e4; border-radius:6px; padding:7px 10px; margin:10px 0 8px; line-height:1.6;">
+      <strong>Key distinction from J1:</strong> existing app rows and their options are preserved. Adding a new app invalidates the whole plan's validation state, not just the new row.
+    </div>
+    <div class="j-exits">
+      <span class="j-exit">→ Validate Now</span>
+      <span class="j-exit">→ Save Plan</span>
+      <span class="j-exit">→ Continue</span>
+    </div>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════
+     SECTION 2 — STATE DIAGRAM
+══════════════════════════════════ -->
+<div class="section-title">Page State Diagram</div>
+
+<div class="diagram">
+
+  <!-- ENTRY -->
+  <div class="node node-start" style="min-width:130px">
+    <span class="icon">↗</span>
+    <span class="label">Enter page</span>
+    <span class="sublabel">New or existing draft plan</span>
+  </div>
+
+  <!-- blocked side note -->
+  <div class="rel-wrap" style="margin:0">
+    <div class="arrow-down"></div>
+    <div class="side-note">
+      <strong>🚫 J7 — Blocked</strong>
+      Maintenance mode on source or target<br><br>
+      OR ongoing publish in target<br><br>
+      All actions disabled. Error banner shown.
+    </div>
+  </div>
+
+  <!-- PLAN LOADED -->
+  <div class="node node-page">
+    <span class="icon">📋</span>
+    <span class="label">Plan loaded</span>
+    <span class="sublabel">Empty (J1) or existing apps already in list (J8)</span>
+  </div>
+
+  <div class="arrow-down"></div>
+
+  <!-- COMPOSE PLAN -->
+  <div class="panel">
+    <div class="panel-title">① Compose plan &nbsp;<span style="color:#3730a3;font-weight:600;font-style:italic">J1</span> &nbsp;<span style="color:#0f766e;font-weight:600;font-style:italic">J8</span></div>
+    <div class="panel-grid-3">
+      <div class="chip chip-blue">
+        <span class="c-label">Add Application</span>
+        <span class="c-sub">From available list, one at a time</span>
+      </div>
+      <div class="chip chip-blue">
+        <span class="c-label">Add All Applications</span>
+        <span class="c-sub">Bulk-add all eligible apps</span>
+      </div>
+      <div class="chip chip-red">
+        <span class="c-label">Remove Application</span>
+        <span class="c-sub">× on row. App removed from plan.</span>
+      </div>
+      <div class="chip chip-yellow" style="grid-column:span 3">
+        <span class="c-label">Change deployment option</span>
+        <span class="c-sub">Dropdown per row — switch version, skip app, etc. &nbsp;<em>Does not trigger validation.</em></span>
+      </div>
+    </div>
+    <div class="alert-yellow">
+      <strong>No action triggers validation automatically.</strong> Every change puts the plan into "Needs validation" state. The user must explicitly click "Validate Now".
+      <br><span style="color:#92400e;">In J8 (adding to existing plan): adding a new app invalidates the <em>entire</em> plan's prior results — all rows must be re-validated together.</span>
+    </div>
+  </div>
+
+  <div class="arrow-down"></div>
+  <div class="arrow-label">any change to plan composition or options</div>
+  <div class="arrow-down" style="height:16px"></div>
+
+  <!-- NEEDS VALIDATION -->
+  <div class="node node-needval" style="min-width:220px">
+    <span class="icon">⚠</span>
+    <span class="label">Needs validation</span>
+    <span class="sublabel">Action bar: "Validate Now" button.<br>Continue is disabled.</span>
+  </div>
+
+  <div class="arrow-down"></div>
+  <div class="arrow-label">user clicks "Validate Now" &nbsp;<span style="color:#0369a1;font-weight:600">J2</span></div>
+  <div class="arrow-down" style="height:16px"></div>
+
+  <!-- VALIDATING -->
+  <div class="node node-warn" style="min-width:210px">
+    <span class="icon">⟳</span>
+    <span class="label">Validating…</span>
+    <span class="sublabel">Spinner shown. All actions<br>disabled during this phase.</span>
+  </div>
+
+  <div class="arrow-down"></div>
+  <div class="arrow-label">server responds with per-app results</div>
+  <div class="arrow-down" style="height:16px"></div>
+
+  <!-- PER-APP STATES -->
+  <div class="panel">
+    <div class="panel-title">② Per-app result states &nbsp;<span style="color:#0369a1;font-weight:600;font-style:italic">J2 · J3 · J4</span></div>
+    <div class="panel-grid-3">
+      <div class="chip chip-neutral">
+        <span class="c-label">⏳ Waiting</span>
+        <span class="c-sub">Still being validated</span>
+      </div>
+      <div class="chip chip-green">
+        <span class="c-label">✓ Deploy</span>
+        <span class="c-sub">Ready. No issues.</span>
+      </div>
+      <div class="chip chip-gray">
+        <span class="c-label">— No Deploy</span>
+        <span class="c-sub">Skipped or already up-to-date</span>
+      </div>
+      <div class="chip chip-yellow">
+        <span class="c-label">⚠ Deploy + Warnings</span>
+        <span class="c-sub">Will deploy. Review warnings. "Show Details" link opens diff popup.</span>
+      </div>
+      <div class="chip chip-orange">
+        <span class="c-label">⚠ Deploy + Errors</span>
+        <span class="c-sub">Can force-deploy. "Show Details" link.</span>
+      </div>
+      <div class="chip chip-red">
+        <span class="c-label">✕ Error</span>
+        <span class="c-sub">Blocked. "Fix Errors in Selection" shown. Must resolve or override.</span>
+      </div>
+    </div>
+    <div style="font-size:11px; color:#6b7280; margin-top:10px; font-style:italic; line-height:1.6">
+      Message text (error description, tooltip, inconsistency type) comes entirely from the API: <code>ModuleInconsistencyMessage</code>, <code>InconsistencyType.Label</code>, <code>TooltipDescription</code>, <code>ConsistencyStatusMessages</code>.
+    </div>
+  </div>
+
+  <div class="arrow-down"></div>
+
+  <!-- ACTION BAR -->
+  <div class="panel">
+    <div class="panel-title">③ Action bar state (aggregate of all rows)</div>
+    <div class="panel-grid-4">
+      <div class="chip chip-neutral">
+        <span class="c-label">Nothing selected</span>
+        <span class="c-sub">No apps in plan. Continue disabled.</span>
+      </div>
+      <div class="chip chip-yellow">
+        <span class="c-label">Need validation</span>
+        <span class="c-sub">"Validate Now" shown. Continue blocked.</span>
+      </div>
+      <div class="chip chip-green">
+        <span class="c-label">OK</span>
+        <span class="c-sub">"Continue" enabled. No blockers.</span>
+      </div>
+      <div class="chip chip-red">
+        <span class="c-label">Errors</span>
+        <span class="c-sub">"Continue with errors" shown instead.</span>
+      </div>
+      <div class="chip chip-gray" style="grid-column:span 2">
+        <span class="c-label">Disabled</span>
+        <span class="c-sub">No permission. Tooltip: "You have no permissions to Continue this plan".</span>
+      </div>
+      <div class="chip chip-gray" style="grid-column:span 2">
+        <span class="c-label">Blocked (env)</span>
+        <span class="c-sub">Maintenance mode or ongoing publish. All actions frozen. See J7.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down"></div>
+
+  <!-- USER DECISION -->
+  <div class="node node-action" style="min-width:200px">
+    <span class="icon">↕</span>
+    <span class="label">User chooses action</span>
+  </div>
+
+  <div class="arrow-down" style="height:24px"></div>
+
+  <!-- EXITS -->
+  <div class="exits">
+
+    <div class="exit-col">
+      <div class="exit-label">Save Plan &nbsp;<span style="color:#166534;font-weight:600">J5</span></div>
+      <div class="arrow-down" style="height:20px"></div>
+      <div class="node node-page" style="min-width:130px">
+        <span class="icon">💾</span>
+        <span class="label">Plan saved</span>
+        <span class="sublabel">Stay on page</span>
+      </div>
+    </div>
+
+    <div class="exit-col">
+      <div class="exit-label">Continue &nbsp;<span style="color:#0369a1;font-weight:600">J2</span></div>
+      <div class="arrow-down" style="height:20px"></div>
+      <div class="node node-exit" style="min-width:140px">
+        <span class="icon">→</span>
+        <span class="label">Confirm Deploy</span>
+        <span class="sublabel">Next wizard step</span>
+      </div>
+    </div>
+
+    <div class="exit-col">
+      <div class="exit-label">Continue with errors &nbsp;<span style="color:#b91c1c;font-weight:600">J4</span></div>
+      <div class="arrow-down" style="height:20px"></div>
+      <div class="node node-exit" style="min-width:140px; background:#7f1d1d">
+        <span class="icon">→</span>
+        <span class="label">Confirm Deploy</span>
+        <span class="sublabel">Forced, with errors</span>
+      </div>
+    </div>
+
+    <div class="exit-col">
+      <div class="exit-label">Discard Plan &nbsp;<span style="color:#6b7280;font-weight:600">J6</span></div>
+      <div class="arrow-down" style="height:20px"></div>
+      <div class="node node-action" style="min-width:130px; background:#fff7ed; color:#9a3412; border-color:#fed7aa">
+        <span class="icon">⚠</span>
+        <span class="label">Confirm dialog</span>
+        <span class="sublabel">"Discard current plan?"</span>
+      </div>
+      <div class="arrow-down" style="height:20px"></div>
+      <div class="node node-exit-sec" style="min-width:130px">
+        <span class="icon">←</span>
+        <span class="label">Stagings List</span>
+        <span class="sublabel">Plan deleted</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a1a2e"></div>Entry / exit point</div>
+  <div class="legend-item"><div class="legend-dot" style="background:white;border:2px solid #d0d5dd"></div>Page state</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#eef2ff;border:2px solid #c7d2fe"></div>User action / decision</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fffbeb;border:2px solid #fde68a"></div>Warning / needs attention</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:2px solid #fde047"></div>In-progress / loading</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0fdf4;border:2px solid #bbf7d0"></div>OK / success</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fef2f2;border:2px solid #fecaca"></div>Error state</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f9fafb;border:2px dashed #d1d5db"></div>Disabled / blocked / skip</div>
+  <div class="legend-item"><strong>J1–J7</strong>&nbsp; journey reference tags</div>
+</div>
+
+</body>
+</html>
