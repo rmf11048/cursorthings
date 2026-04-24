@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeTime – Deployment Plan to CICD (Prototype)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Verdana, Arial, sans-serif; font-size: 12px; background: #f0f0f0; color: #2d3748; }
+    a { text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Nav */
+    .lt-nav { background: #14172b; }
+    .nav-item { color: #8a94a8; padding: 0 11px; height: 44px; display: inline-flex; align-items: center; font-size: 12px; text-decoration: none !important; border-bottom: 2px solid transparent; transition: color 0.15s; cursor: pointer; }
+    .nav-item:hover { color: #e2e8f0; }
+    .nav-item.active { color: #ffffff; border-bottom-color: #00b386; }
+
+    /* App icon badge */
+    .app-icon { width: 26px; height: 26px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; flex-shrink: 0; letter-spacing: -0.5px; }
+
+    /* Environment column headers */
+    .env-header { background: #4a5568; color: white; padding: 6px 10px; font-size: 12px; font-weight: bold; }
+
+    /* Action pill button */
+    .pill { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; white-space: nowrap; }
+    .pill:hover { filter: brightness(1.08); }
+    .pill:active { filter: brightness(0.95); }
+
+    /* Custom dropdown */
+    .dd-menu { position: absolute; top: calc(100% + 3px); right: 0; z-index: 300; background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 195px; border-radius: 3px; overflow: hidden; }
+    .dd-item { padding: 7px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #2d3748; }
+    .dd-item:hover { background: #ebf4ff; }
+    .dd-item.sel { font-weight: bold; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: flex; align-items: center; justify-content: center; }
+    .modal { background: white; border-radius: 4px; padding: 22px 24px; width: 90%; max-width: 490px; box-shadow: 0 8px 32px rgba(0,0,0,0.22); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 11px 18px; border-radius: 4px; color: white; font-size: 12px; z-index: 1000; box-shadow: 0 3px 10px rgba(0,0,0,0.25); max-width: 380px; line-height: 1.4; }
+
+    /* Table */
+    table { border-collapse: collapse; width: 100%; }
+    td, th { vertical-align: top; }
+    .data-row:hover td { background-color: #f0f8ff !important; }
+    .remove-btn { background: none; border: none; cursor: pointer; color: #cbd5e0; font-size: 18px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+    .remove-btn:hover { color: #e53e3e; }
+
+    /* Validation message rows */
+    .msg-item { display: flex; gap: 8px; padding: 5px 9px; border-radius: 3px; margin-bottom: 5px; font-size: 11px; line-height: 1.5; }
+    .msg-item.error { background: #fff5f5; border-left: 3px solid #fc8181; }
+    .msg-item.warning { background: #fffbeb; border-left: 3px solid #f6e05e; }
+
+    /* Spinner animation */
+    .spin { display: inline-block; animation: spin 0.9s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* Buttons */
+    .btn { padding: 4px 13px; border-radius: 3px; font-size: 12px; cursor: pointer; border: none; font-weight: bold; }
+    .btn-primary { background: #3182ce; color: white; }
+    .btn-primary:hover { background: #2b6cb0; }
+    .btn-success { background: #38a169; color: white; }
+    .btn-success:hover { background: #276749; }
+    .btn-danger { background: #e53e3e; color: white; }
+    .btn-danger:hover { background: #c53030; }
+    .btn-warning { background: #d97706; color: white; }
+    .btn-warning:hover { background: #b45309; }
+    .btn-ghost { background: white; color: #4a5568; border: 1px solid #e2e8f0; }
+    .btn-ghost:hover { background: #f7fafc; }
+
+    /* Wizard */
+    .wizard-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid; flex-shrink: 0; }
+
+    /* Status badge */
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+
+    /* Link button */
+    .link-btn { background: none; border: none; cursor: pointer; padding: 0; font-size: 11px; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAMPLE DATA
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ALL_APPS = [
+  {
+    id: 'customer-portal',
+    name: 'Customer Portal', kind: 'Web Application',
+    iconColor: '#3b82f6', initials: 'CP',
+    srcVersion: '2.1', srcDate: 'Mar 12, 14:30', srcAuthor: 'Daniel Luz',
+    tgtVersion: '2.0',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 2.1' },
+      { id: 'deploy',     label: 'Deploy 2.1' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'payment-gateway',
+    name: 'Payment Gateway', kind: 'Extension',
+    iconColor: '#f59e0b', initials: 'PG',
+    srcVersion: '1.4', srcDate: 'Feb 28, 09:15', srcAuthor: 'Sofia Costa',
+    tgtVersion: '1.2',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 1.4' },
+      { id: 'deploy',     label: 'Deploy 1.4' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'auth-service',
+    name: 'Auth Service', kind: 'Service Module',
+    iconColor: '#10b981', initials: 'AS',
+    srcVersion: '3.0', srcDate: 'Mar 05, 16:45', srcAuthor: 'Ricardo Ferreira',
+    tgtVersion: '3.0',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 3.0' },
+      { id: 'deploy',     label: 'Deploy 3.0' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'reporting-module',
+    name: 'Reporting Module', kind: 'Web Application',
+    iconColor: '#8b5cf6', initials: 'RM',
+    srcVersion: '2.0', srcDate: 'Mar 01, 11:20', srcAuthor: 'Ana Silva',
+    tgtVersion: '1.9',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 2.0' },
+      { id: 'deploy',     label: 'Deploy 2.0' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'mobile-app',
+    name: 'Mobile App', kind: 'Mobile Application',
+    iconColor: '#ec4899', initials: 'MA',
+    srcVersion: '0.9', srcDate: 'Mar 08, 10:00', srcAuthor: 'Carlos Mendes',
+    tgtVersion: '0.8',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 0.9' },
+      { id: 'deploy',     label: 'Deploy 0.9' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'core-framework',
+    name: 'Core Framework', kind: 'Library',
+    iconColor: '#6366f1', initials: 'CF',
+    srcVersion: '4.2', srcDate: 'Feb 20, 08:30', srcAuthor: 'Maria Santos',
+    tgtVersion: '4.1',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 4.2' },
+      { id: 'deploy',     label: 'Deploy 4.2' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'notification-svc',
+    name: 'Notification Service', kind: 'Service Module',
+    iconColor: '#14b8a6', initials: 'NS',
+    srcVersion: '1.1', srcDate: 'Mar 10, 13:00', srcAuthor: 'João Lima',
+    tgtVersion: '1.0',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 1.1' },
+      { id: 'deploy',     label: 'Deploy 1.1' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+  {
+    id: 'admin-portal',
+    name: 'Admin Portal', kind: 'Web Application',
+    iconColor: '#f97316', initials: 'AP',
+    srcVersion: '5.3', srcDate: 'Mar 07, 16:00', srcAuthor: 'Luisa Gomes',
+    tgtVersion: '5.2',
+    options: [
+      { id: 'tag_deploy', label: 'Tag & Deploy 5.3' },
+      { id: 'deploy',     label: 'Deploy 5.3' },
+      { id: 'do_nothing', label: 'Do Nothing' },
+    ],
+  },
+];
+
+// Validation results produced per app after "Validate Now"
+const VAL_RESULTS = {
+  'customer-portal':  { vState: 'ok', msgs: [] },
+  'payment-gateway':  {
+    vState: 'warning',
+    msgs: [
+      { type: 'warning', text: 'Deploying this version will result in different application versions between the source and target environments. Source environment has version 1.4; target environment (CICD) currently has version 1.2.' },
+    ],
+  },
+  'auth-service':     { vState: 'ok', msgs: [] },
+  'reporting-module': {
+    vState: 'error',
+    msgs: [
+      { type: 'error', text: 'Application "Core Framework" (v4.2) is required by this application but is not included in this deployment plan. Add it to the plan or select "Do Nothing" to skip this application.' },
+      { type: 'error', text: 'Module "ReportUtils" has an incompatible reference with producer module "CoreLib": expected v4.2, found v4.1 in the target environment.' },
+    ],
+  },
+  'mobile-app':       {
+    vState: 'warning',
+    msgs: [
+      { type: 'warning', text: 'Consumer application "Customer Portal" references an older version of module "MobileSDK" (v1.0). It is recommended to also include "Customer Portal" in this deployment plan.' },
+    ],
+  },
+  'core-framework':   { vState: 'ok', msgs: [] },
+  'notification-svc': { vState: 'ok', msgs: [] },
+  'admin-portal':     { vState: 'ok', msgs: [] },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function mkPlanApp(appDef) {
+  return { ...appDef, selectedOpt: 'tag_deploy', vState: 'none', msgs: [] };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMALL COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AppIcon({ color, initials }) {
+  return <span className="app-icon" style={{ background: color }}>{initials}</span>;
+}
+
+function WizardStepper({ step }) {
+  const steps = [
+    'Add the applications to deploy',
+    'Configure applications settings',
+    'Review deployment plan',
+    'Execute deployment plan',
+  ];
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 22 }}>
+      {steps.map((label, i) => {
+        const n = i + 1;
+        const active = n === step;
+        const done   = n < step;
+        const accent = active || done;
+        return (
+          <React.Fragment key={n}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 82, textAlign: 'center', zIndex: 1, position: 'relative' }}>
+              <div className="wizard-circle" style={{
+                borderColor: accent ? '#00b386' : '#cbd5e0',
+                background:  accent ? '#00b386' : 'white',
+                color:       accent ? 'white'   : '#a0aec0',
+              }}>
+                {done ? '✓' : n}
+              </div>
+              <div style={{ fontSize: 10, color: active ? '#2d3748' : '#718096', marginTop: 5, lineHeight: 1.3 }}>
+                {label}
+              </div>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ flex: 1, height: 2, background: done ? '#00b386' : '#e2e8f0', marginTop: 13, zIndex: 0 }} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+// Dropdown pill — coloured action button that also lets you pick a different option
+function DropdownPill({ options, selected, onChange, color, icon }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+
+  useEffect(() => {
+    function onDown(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  const current = options.find(o => o.id === selected) || options[0];
+
+  return (
+    <span ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button className="pill" style={{ background: color, color: 'white' }} onClick={() => setOpen(v => !v)}>
+        {icon && <span>{icon}</span>}
+        {current.label}
+        <span style={{ fontSize: 9, marginLeft: 1 }}>▾</span>
+      </button>
+      {open && (
+        <div className="dd-menu">
+          {options.map(opt => (
+            <div
+              key={opt.id}
+              className={`dd-item${opt.id === selected ? ' sel' : ''}`}
+              onClick={() => { onChange(opt.id); setOpen(false); }}
+            >
+              <span style={{ width: 14, color: '#3182ce', fontSize: 10 }}>
+                {opt.id === selected ? '✓' : ''}
+              </span>
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APP TABLE ROW
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AppRow({ app, isEven, onOptionChange, onRemove }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMsgs = app.msgs && app.msgs.length > 0;
+
+  // Auto-expand when validation delivers messages; auto-collapse when cleared
+  useEffect(() => {
+    setExpanded(app.msgs.length > 0);
+  }, [app.msgs.length]);
+
+  const pillColor = {
+    none:    '#4a90d9',
+    ok:      '#38a169',
+    warning: '#d97706',
+    error:   '#e53e3e',
+    waiting: '#a0aec0',
+  }[app.vState] || '#4a90d9';
+
+  const pillIcon = { ok: '✓ ', warning: '⚠ ', error: '✕ ' }[app.vState] || '';
+  const rowBg = isEven ? '#fafafa' : '#ffffff';
+  const vMismatch = app.srcVersion !== app.tgtVersion;
+
+  return (
+    <>
+      <tr className="data-row" style={{ borderBottom: '1px solid #ebebeb' }}>
+        {/* Application column */}
+        <td style={{ padding: '9px 12px', background: rowBg }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AppIcon color={app.iconColor} initials={app.initials} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 'bold', fontSize: 12, color: '#2d3748', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {app.name}
+              </div>
+              <div style={{ fontSize: 11, color: '#718096' }}>{app.kind}</div>
+            </div>
+            <button className="remove-btn" title="Remove from plan" onClick={onRemove}>×</button>
+          </div>
+        </td>
+
+        {/* Source env (Development) */}
+        <td style={{ padding: '9px 10px', borderLeft: '1px solid #e2e8f0', background: rowBg, minWidth: 160 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <strong style={{ fontSize: 12 }}>v{app.srcVersion}</strong>
+            {vMismatch && (
+              <span title="Target environment has a different version" style={{ color: '#d97706', fontSize: 13 }}>⚠</span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: '#718096', marginTop: 1 }}>{app.srcDate}</div>
+          <div style={{ fontSize: 11, color: '#718096' }}>by {app.srcAuthor}</div>
+        </td>
+
+        {/* Target env (CICD) — action + option */}
+        <td style={{ padding: '9px 10px', borderLeft: '1px solid #e2e8f0', background: rowBg }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {app.vState === 'waiting' ? (
+              <span style={{ fontSize: 12, color: '#718096', fontStyle: 'italic' }}>
+                <span className="spin">⟳</span> Validating...
+              </span>
+            ) : (
+              <DropdownPill
+                options={app.options}
+                selected={app.selectedOpt}
+                onChange={onOptionChange}
+                color={pillColor}
+                icon={pillIcon}
+              />
+            )}
+            {hasMsgs && app.vState !== 'waiting' && (
+              <button
+                className="link-btn"
+                style={{ color: app.vState === 'error' ? '#e53e3e' : '#d97706' }}
+                onClick={() => setExpanded(v => !v)}
+              >
+                {expanded ? 'Hide Details' : 'Show Details'}
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: '#718096', marginTop: 3 }}>
+            CICD: v{app.tgtVersion}
+          </div>
+        </td>
+      </tr>
+
+      {/* Validation messages (expandable) */}
+      {hasMsgs && expanded && (
+        <tr style={{ borderBottom: '1px solid #ebebeb' }}>
+          <td colSpan={3} style={{ padding: '4px 44px 10px 44px', background: isEven ? '#fafafa' : '#fff' }}>
+            {app.msgs.map((msg, i) => (
+              <div key={i} className={`msg-item ${msg.type}`}>
+                <span style={{ fontSize: 13, flexShrink: 0, color: msg.type === 'error' ? '#e53e3e' : '#d97706' }}>
+                  {msg.type === 'error' ? '✕' : '⚠'}
+                </span>
+                <span style={{ color: '#4a5568' }}>{msg.text}</span>
+              </div>
+            ))}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODALS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AddAppsModal({ currentIds, onAdd, onClose }) {
+  const available = ALL_APPS.filter(a => !currentIds.includes(a.id));
+  const [sel, setSel] = useState([]);
+
+  function toggle(id) {
+    setSel(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 12, color: '#2d3748' }}>
+          Add Applications to Deployment Plan
+        </div>
+
+        {available.length === 0 ? (
+          <p style={{ color: '#718096', fontSize: 12 }}>All available applications are already in the plan.</p>
+        ) : (
+          <>
+            <div style={{ fontSize: 11, color: '#718096', marginBottom: 8 }}>
+              Select applications to add to the plan. Adding new applications will require re-validation.
+            </div>
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 3, maxHeight: 300, overflowY: 'auto' }}>
+              {available.map((app, i) => (
+                <label key={app.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                  borderBottom: i < available.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  cursor: 'pointer',
+                  background: sel.includes(app.id) ? '#ebf8ff' : 'white',
+                }}>
+                  <input type="checkbox" checked={sel.includes(app.id)} onChange={() => toggle(app.id)} />
+                  <AppIcon color={app.iconColor} initials={app.initials} />
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: 12 }}>{app.name}</div>
+                    <div style={{ fontSize: 11, color: '#718096' }}>
+                      {app.kind} · Development: v{app.srcVersion} · CICD: v{app.tgtVersion}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          {available.length > 0 && (
+            <button
+              className="btn btn-primary"
+              disabled={sel.length === 0}
+              style={{ opacity: sel.length === 0 ? 0.5 : 1, cursor: sel.length === 0 ? 'default' : 'pointer' }}
+              onClick={() => { if (sel.length) { onAdd(sel); onClose(); } }}
+            >
+              Add{sel.length > 0 ? ` (${sel.length})` : ''}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DiscardModal({ onConfirm, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 10, color: '#c53030' }}>
+          Discard Deployment Plan?
+        </div>
+        <p style={{ fontSize: 12, color: '#4a5568', lineHeight: 1.5, marginBottom: 18 }}>
+          All unsaved changes will be lost and this deployment plan will be deleted.
+          This action cannot be undone.
+        </p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger" onClick={onConfirm}>Yes, Discard Plan</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+function LifeTimeApp() {
+  // Plan apps list
+  const [apps, setApps] = useState(ALL_APPS.slice(0, 6).map(mkPlanApp));
+
+  // Plan state machine: empty | needs-validation | validating | validated
+  const [planState, setPlanState] = useState('needs-validation');
+
+  // Wizard step (1–4)
+  const [wizardStep, setWizardStep] = useState(1);
+
+  // UI state
+  const [showAddModal,     setShowAddModal]     = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [toast,            setToast]            = useState(null);
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+
+  function showToast(msg, color = '#38a169') {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 3500);
+  }
+
+  function clearValidation(appsArr) {
+    return appsArr.map(a => ({ ...a, vState: 'none', msgs: [] }));
+  }
+
+  // ── derived action-bar state ───────────────────────────────────────────────
+
+  const hasErrors   = apps.some(a => a.vState === 'error');
+  const hasWarnings = apps.some(a => a.vState === 'warning');
+
+  const actionBarState = (() => {
+    if (apps.length === 0)             return 'empty';
+    if (planState === 'needs-validation') return 'needs-validation';
+    if (planState === 'validating')     return 'validating';
+    if (hasErrors)                     return 'has-errors';
+    if (hasWarnings)                   return 'has-warnings';
+    return 'ok';
+  })();
+
+  // ── handlers ──────────────────────────────────────────────────────────────
+
+  function handleValidate() {
+    if (apps.length === 0) return;
+    const snapshot = [...apps]; // capture order at click time
+    setPlanState('validating');
+    setApps(prev => prev.map(a => ({ ...a, vState: 'waiting', msgs: [] })));
+
+    snapshot.forEach((app, i) => {
+      setTimeout(() => {
+        const result = VAL_RESULTS[app.id] || { vState: 'ok', msgs: [] };
+        setApps(prev => prev.map(a =>
+          a.id === app.id ? { ...a, vState: result.vState, msgs: result.msgs } : a
+        ));
+        if (i === snapshot.length - 1) {
+          setTimeout(() => setPlanState('validated'), 350);
+        }
+      }, 500 + i * 380);
+    });
+  }
+
+  function handleOptionChange(appId, optId) {
+    setApps(prev => prev.map(a => a.id === appId ? { ...a, selectedOpt: optId } : a));
+    if (planState === 'validated') {
+      setPlanState('needs-validation');
+      setApps(prev => clearValidation(prev).map(a => a.id === appId ? { ...a, selectedOpt: optId } : a));
+      showToast('Option changed — re-validate to update results.', '#3182ce');
+    }
+  }
+
+  function handleRemove(appId) {
+    setApps(prev => {
+      const next = prev.filter(a => a.id !== appId);
+      if (next.length === 0) {
+        setPlanState('empty');
+        return next;
+      }
+      if (planState === 'validated') {
+        setPlanState('needs-validation');
+        return clearValidation(next);
+      }
+      return next;
+    });
+  }
+
+  function handleAddApps(ids) {
+    const newApps = ALL_APPS.filter(a => ids.includes(a.id)).map(mkPlanApp);
+    setApps(prev => {
+      const merged = [...prev, ...newApps];
+      if (planState === 'validated') return clearValidation(merged);
+      return merged;
+    });
+    if (planState === 'validated' || planState === 'empty') setPlanState('needs-validation');
+    showToast(`Added ${newApps.length} application${newApps.length > 1 ? 's' : ''} — validate to check for issues.`);
+  }
+
+  function handleAddAll() {
+    const currentIds = apps.map(a => a.id);
+    const toAdd = ALL_APPS.filter(a => !currentIds.includes(a.id));
+    if (toAdd.length === 0) {
+      showToast('All available applications are already in the plan.', '#718096');
+      return;
+    }
+    handleAddApps(toAdd.map(a => a.id));
+  }
+
+  function handleSave() {
+    showToast('Deployment plan saved successfully.', '#3182ce');
+  }
+
+  function handleContinue() {
+    setWizardStep(2);
+    showToast('Continuing to Step 2: Configure application settings.', '#3182ce');
+  }
+
+  function handleContinueWithErrors() {
+    setWizardStep(2);
+    showToast('Continuing with errors — some applications may fail during deployment.', '#d97706');
+  }
+
+  function handleDiscard() {
+    setShowDiscardModal(false);
+    setApps([]);
+    setPlanState('empty');
+    setWizardStep(1);
+    showToast('Deployment plan discarded.', '#e53e3e');
+  }
+
+  const currentIds = apps.map(a => a.id);
+
+  // ── render ────────────────────────────────────────────────────────────────
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f0f0f0' }}>
+
+      {/* ──────── NAV ──────── */}
+      <nav className="lt-nav" style={{ display: 'flex', alignItems: 'center', paddingLeft: 16, paddingRight: 16, height: 44 }}>
+        <span style={{ fontSize: 14, fontWeight: 'bold', marginRight: 20, whiteSpace: 'nowrap', userSelect: 'none' }}>
+          <span style={{ color: '#f34134' }}>outsystems</span>
+          <span style={{ color: '#4a5568' }}> • </span>
+          <span style={{ color: 'white' }}>LifeTime</span>
+        </span>
+        {['Applications', 'User Management', 'Environments', 'Analytics'].map(item => (
+          <a key={item} href="#" className={`nav-item${item === 'Applications' ? ' active' : ''}`}
+            onClick={e => e.preventDefault()}>{item}</a>
+        ))}
+        <a href="#" className="nav-item" onClick={e => e.preventDefault()}>Plugins ▾</a>
+        <div style={{ flex: 1 }} />
+        <a href="#" className="nav-item" style={{ fontSize: 14, paddingLeft: 8, paddingRight: 8 }} onClick={e => e.preventDefault()}>?</a>
+        <a href="#" className="nav-item" style={{ paddingLeft: 8, paddingRight: 8 }} onClick={e => e.preventDefault()}>🔔</a>
+        <a href="#" className="nav-item" onClick={e => e.preventDefault()}>Ricardo Ferreira ▾</a>
+      </nav>
+
+      {/* ──────── PAGE ──────── */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '18px 24px 40px' }}>
+
+        {/* Breadcrumb */}
+        <div style={{ fontSize: 11, color: '#718096', marginBottom: 8 }}>
+          <a href="#" style={{ color: '#3182ce' }} onClick={e => e.preventDefault()}>Applications</a>
+          {' › '}
+          <span>Create Deployment Plan to CICD</span>
+        </div>
+
+        {/* Title */}
+        <h1 style={{ fontSize: 24, fontWeight: 'bold', color: '#1a202c', margin: '0 0 4px 0' }}>
+          Deployment Plan to CICD
+        </h1>
+
+        {/* Quick actions */}
+        <div style={{ fontSize: 12, marginBottom: 20, color: '#718096', display: 'flex', gap: 0, alignItems: 'center' }}>
+          <a href="#" style={{ color: '#3182ce' }} onClick={e => { e.preventDefault(); handleSave(); }}>Save Plan</a>
+          <span style={{ margin: '0 6px', color: '#cbd5e0' }}>|</span>
+          <a href="#" style={{ color: '#3182ce' }} onClick={e => { e.preventDefault(); handleAddAll(); }}>Add All Applications</a>
+          <span style={{ margin: '0 6px', color: '#cbd5e0' }}>|</span>
+          <a href="#" style={{ color: '#e53e3e' }} onClick={e => { e.preventDefault(); setShowDiscardModal(true); }}>Discard Plan</a>
+        </div>
+
+        {/* Wizard stepper */}
+        <WizardStepper step={wizardStep} />
+
+        {/* ── TABLE CARD ── */}
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+
+          {/* Toolbar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 12px', background: '#f9fafb', borderBottom: '1px solid #e2e8f0'
+          }}>
+            {/* Left side */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+              <a href="#" style={{ color: '#3182ce', fontWeight: 'bold', fontSize: 12 }}
+                onClick={e => { e.preventDefault(); setShowAddModal(true); }}>
+                ⊕ Add Applications
+              </a>
+              <span style={{ color: '#718096', fontSize: 12 }}>
+                Applications: <strong>{apps.length}</strong>
+              </span>
+            </div>
+
+            {/* Right side — action bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {actionBarState === 'empty' && (
+                <span style={{ color: '#a0aec0', fontSize: 12 }}>Add applications to get started</span>
+              )}
+              {actionBarState === 'needs-validation' && (
+                <button className="btn btn-primary" onClick={handleValidate}>Validate Now</button>
+              )}
+              {actionBarState === 'validating' && (
+                <span style={{ color: '#718096', fontSize: 12, fontStyle: 'italic' }}>
+                  <span className="spin" style={{ display: 'inline-block', marginRight: 5 }}>⟳</span>Validating...
+                </span>
+              )}
+              {actionBarState === 'ok' && (
+                <>
+                  <span style={{ color: '#38a169', fontSize: 12, fontWeight: 'bold' }}>✓ Validation Passed</span>
+                  <button className="btn btn-success" onClick={handleContinue}>Continue →</button>
+                </>
+              )}
+              {actionBarState === 'has-warnings' && (
+                <>
+                  <button className="btn btn-warning" onClick={handleValidate}>⚠ Re-Validate</button>
+                  <button className="btn btn-primary" onClick={handleContinue}>Continue with Warnings →</button>
+                </>
+              )}
+              {actionBarState === 'has-errors' && (
+                <>
+                  <button className="btn btn-danger" onClick={handleValidate}>Fix Errors in Selection</button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Table */}
+          {apps.length > 0 && (
+            <table>
+              <colgroup>
+                <col style={{ width: '36%' }} />
+                <col style={{ width: '28%' }} />
+                <col style={{ width: '36%' }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style={{ padding: 0 }}>
+                    <div style={{ padding: '5px 12px', background: '#f9fafb', borderBottom: '1px solid #e2e8f0', fontSize: 11, color: '#718096', fontWeight: 'normal', textAlign: 'left' }}>
+                      Application
+                    </div>
+                  </th>
+                  <th style={{ padding: 0 }}>
+                    <div className="env-header" style={{ borderLeft: '1px solid #3d4a5c' }}>
+                      Development
+                    </div>
+                  </th>
+                  <th style={{ padding: 0 }}>
+                    <div className="env-header" style={{ borderLeft: '1px solid #3d4a5c', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>CICD ▾</span>
+                      {(actionBarState === 'ok' || actionBarState === 'has-warnings') && (
+                        <button onClick={handleContinue} style={{
+                          padding: '1px 9px', background: 'rgba(255,255,255,0.18)',
+                          color: 'white', border: '1px solid rgba(255,255,255,0.35)',
+                          borderRadius: 3, cursor: 'pointer', fontSize: 11, fontWeight: 'bold'
+                        }}>
+                          Continue →
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {apps.map((app, i) => (
+                  <AppRow
+                    key={app.id}
+                    app={app}
+                    isEven={i % 2 === 0}
+                    onOptionChange={optId => handleOptionChange(app.id, optId)}
+                    onRemove={() => handleRemove(app.id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Empty state */}
+          {apps.length === 0 && (
+            <div style={{ padding: '52px 24px', textAlign: 'center', color: '#a0aec0' }}>
+              <div style={{ fontSize: 40, marginBottom: 10 }}>📋</div>
+              <div style={{ fontSize: 13, marginBottom: 6, color: '#718096' }}>No applications in this deployment plan.</div>
+              <div style={{ fontSize: 12 }}>
+                <a href="#" style={{ color: '#3182ce' }} onClick={e => { e.preventDefault(); setShowAddModal(true); }}>
+                  ⊕ Add Applications
+                </a>
+                {' or '}
+                <a href="#" style={{ color: '#3182ce' }} onClick={e => { e.preventDefault(); handleAddAll(); }}>
+                  Add All Available
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom "Continue with errors" link */}
+        {actionBarState === 'has-errors' && (
+          <div style={{ textAlign: 'center', marginTop: 14 }}>
+            <a href="#" style={{ color: '#3182ce', fontSize: 12 }}
+              onClick={e => { e.preventDefault(); handleContinueWithErrors(); }}>
+              Continue with errors →
+            </a>
+          </div>
+        )}
+
+        {/* Validation legend */}
+        {planState === 'validated' && apps.length > 0 && (
+          <div style={{ display: 'flex', gap: 20, marginTop: 18, fontSize: 11, color: '#718096', justifyContent: 'flex-end' }}>
+            <span><span style={{ color: '#38a169', fontWeight: 'bold' }}>✓</span> OK to deploy</span>
+            <span><span style={{ color: '#d97706', fontWeight: 'bold' }}>⚠</span> Warning</span>
+            <span><span style={{ color: '#e53e3e', fontWeight: 'bold' }}>✕</span> Error – must fix</span>
+          </div>
+        )}
+      </div>
+
+      {/* ──────── MODALS ──────── */}
+      {showAddModal && (
+        <AddAppsModal currentIds={currentIds} onAdd={handleAddApps} onClose={() => setShowAddModal(false)} />
+      )}
+      {showDiscardModal && (
+        <DiscardModal onConfirm={handleDiscard} onClose={() => setShowDiscardModal(false)} />
+      )}
+
+      {/* ──────── TOAST ──────── */}
+      {toast && (
+        <div className="toast" style={{ background: toast.color }}>{toast.msg}</div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.render(<LifeTimeApp />, document.getElementById('root'));
+</script>
+</body>
+</html>
