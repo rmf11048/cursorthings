@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set up delivery pipelines</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: #f5f5f3;
+      color: #1a1a18;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 3rem 1rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 0.5px solid rgba(0,0,0,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 0.5px solid rgba(0,0,0,0.15);
+    }
+
+    .card-header p {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1a1a18;
+    }
+
+    .card-body {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card-body > p {
+      font-size: 14px;
+      color: #5a5a57;
+      margin-bottom: 1rem;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .radio-label:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .radio-label input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #1a1a18;
+      cursor: pointer;
+    }
+
+    .radio-label span {
+      font-size: 14px;
+      color: #1a1a18;
+    }
+
+    #tag-section {
+      display: none;
+      margin-top: 1.25rem;
+    }
+
+    .tag-field {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 0.5px solid rgba(0,0,0,0.3);
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: text;
+      min-height: 40px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .tag-field:focus-within {
+      border-color: #1a1a18;
+      box-shadow: 0 0 0 2px rgba(26,26,24,0.08);
+    }
+
+    .tag-field.has-error {
+      border-color: #b91c1c;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f0efea;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-radius: 6px;
+      padding: 2px 8px 2px 10px;
+      font-size: 12px;
+      color: #1a1a18;
+      white-space: nowrap;
+    }
+
+    .chip-x {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      color: #5a5a57;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 15px;
+      line-height: 1;
+      font-family: inherit;
+    }
+
+    .chip-x:hover {
+      background: rgba(0,0,0,0.1);
+      color: #1a1a18;
+    }
+
+    .tag-input {
+      border: none;
+      outline: none;
+      box-shadow: none;
+      background: transparent;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1a1a18;
+      min-width: 140px;
+      flex: 1;
+      padding: 0;
+      height: 24px;
+    }
+
+    .tag-input::placeholder {
+      color: #aaa;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .tag-error {
+      display: none;
+      font-size: 12px;
+      color: #b91c1c;
+      margin-top: 5px;
+    }
+
+    .card-footer {
+      padding: 1rem 1.5rem;
+      background: #f5f5f3;
+      border-top: 0.5px solid rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-cancel {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: none;
+      color: #1a1a18;
+      border: 0.5px solid rgba(0,0,0,0.3);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .btn-cancel:hover {
+      background: #e8e8e5;
+    }
+
+    .btn-save {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: #1a1a18;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save:hover {
+      opacity: 0.85;
+    }
+
+    .success-msg {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      background: #f0fdf4;
+      border-radius: 8px;
+    }
+
+    .success-msg p {
+      font-size: 13px;
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="width: 100%; max-width: 520px;">
+    <div class="card">
+      <div class="card-header">
+        <p>Set up delivery pipelines</p>
+      </div>
+
+      <div class="card-body">
+        <p>Set up your delivery pipeline structure:</p>
+
+        <label class="radio-label">
+          <input type="radio" name="pipeline" value="single" checked>
+          <span>Single pipeline</span>
+        </label>
+
+        <label class="radio-label">
+          <input type="radio" name="pipeline" value="multiple">
+          <span>Multiple pipeline</span>
+        </label>
+
+        <div id="tag-section">
+          <div class="tag-field" id="tag-field" onclick="document.getElementById('tag-input').focus()">
+            <div id="chips"></div>
+            <input id="tag-input" class="tag-input" type="text" placeholder="Type a name, press Enter">
+          </div>
+          <p class="hint">Press <strong style="font-weight:500">Enter</strong> or <strong style="font-weight:500">,</strong> to add &middot; <strong style="font-weight:500">Backspace</strong> to remove last</p>
+          <p class="tag-error" id="tag-error">Add at least 2 pipeline names to continue.</p>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn-cancel" onclick="handleCancel()">Cancel</button>
+        <button class="btn-save" onclick="handleSave()">Save</button>
+      </div>
+    </div>
+
+    <div class="success-msg" id="success-msg">
+      <p id="success-text"></p>
+    </div>
+  </div>
+
+  <script>
+    let tags = [];
+
+    function renderChips() {
+      const container = document.getElementById('chips');
+      container.innerHTML = '';
+      tags.forEach((tag, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.appendChild(document.createTextNode(tag));
+        const x = document.createElement('button');
+        x.className = 'chip-x';
+        x.innerHTML = '&times;';
+        x.onclick = (e) => { e.stopPropagation(); tags.splice(i, 1); renderChips(); };
+        chip.appendChild(x);
+        container.appendChild(chip);
+      });
+    }
+
+    function addTag(val) {
+      const trimmed = val.trim().replace(/,$/, '').trim();
+      if (trimmed && !tags.includes(trimmed)) {
+        tags.push(trimmed);
+        renderChips();
+        document.getElementById('tag-error').style.display = 'none';
+        document.getElementById('tag-field').classList.remove('has-error');
+      }
+      document.getElementById('tag-input').value = '';
+    }
+
+    document.getElementById('tag-input').addEventListener('keydown', e => {
+      const val = e.target.value;
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        if (val.trim()) addTag(val);
+      } else if (e.key === 'Backspace' && !val && tags.length) {
+        tags.pop();
+        renderChips();
+      }
+    });
+
+    document.getElementById('tag-input').addEventListener('blur', e => {
+      if (e.target.value.trim()) addTag(e.target.value);
+    });
+
+    document.getElementById('tag-input').addEventListener('input', e => {
+      if (e.target.value.endsWith(',')) addTag(e.target.value);
+    });
+
+    document.querySelectorAll('input[name="pipeline"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isMultiple = radio.value === 'multiple';
+        document.getElementById('tag-section').style.display = isMultiple ? 'block' : 'none';
+        if (isMultiple) setTimeout(() => document.getElementById('tag-input').focus(), 50);
+        document.getElementById('tag-error').style.display = 'none';
+        document.getElementById('tag-field').classList.remove('has-error');
+        document.getElementById('success-msg').style.display = 'none';
+      });
+    });
+
+    function handleSave() {
+      const mode = document.querySelector('input[name="pipeline"]:checked').value;
+      document.getElementById('success-msg').style.display = 'none';
+
+      if (mode === 'multiple') {
+        const input = document.getElementById('tag-input');
+        if (input.value.trim()) addTag(input.value);
+        if (tags.length < 2) {
+          document.getElementById('tag-error').style.display = 'block';
+          document.getElementById('tag-field').classList.add('has-error');
+          return;
+        }
+      }
+
+      const text = mode === 'single'
+        ? 'Configuration saved: Single pipeline.'
+        : 'Configuration saved: Multiple pipelines — ' + tags.join(', ') + '.';
+
+      document.getElementById('success-text').textContent = text;
+      document.getElementById('success-msg').style.display = 'block';
+    }
+
+    function handleCancel() {
+      tags = [];
+      renderChips();
+      document.getElementById('tag-input').value = '';
+      document.getElementById('tag-section').style.display = 'none';
+      document.getElementById('tag-error').style.display = 'none';
+      document.getElementById('tag-field').classList.remove('has-error');
+      document.getElementById('success-msg').style.display = 'none';
+      document.querySelectorAll('input[name="pipeline"]')[0].checked = true;
+    }
+  </script>
+
+</body>
+</html>
