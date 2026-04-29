@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set up delivery pipelines</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: #f5f5f3;
+      color: #1a1a18;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 3rem 1rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 0.5px solid rgba(0,0,0,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 0.5px solid rgba(0,0,0,0.15);
+    }
+
+    .card-header p {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1a1a18;
+    }
+
+    .card-body {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card-body > p {
+      font-size: 14px;
+      color: #5a5a57;
+      margin-bottom: 1rem;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .radio-label:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .radio-label input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #1a1a18;
+      cursor: pointer;
+    }
+
+    .radio-label span {
+      font-size: 14px;
+      color: #1a1a18;
+    }
+
+    #pipelines-section {
+      display: none;
+      margin-top: 1.25rem;
+    }
+
+    .pipeline-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-wrap input[type="text"] {
+      width: 100%;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 7px 28px 7px 10px;
+      border: 0.5px solid rgba(0,0,0,0.25);
+      border-radius: 8px;
+      background: #fff;
+      color: #1a1a18;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-wrap input[type="text"]:hover {
+      border-color: rgba(0,0,0,0.4);
+    }
+
+    .input-wrap input[type="text"]:focus {
+      border-color: #1a1a18;
+      box-shadow: 0 0 0 2px rgba(26,26,24,0.1);
+    }
+
+    .input-wrap input[type="text"]::placeholder {
+      color: #aaa;
+    }
+
+    .required-star {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0392b;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .remove-btn {
+      font-size: 12px;
+      color: #5a5a57;
+      background: none;
+      border: 0.5px solid rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 4px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .remove-btn:hover {
+      background: #f5f5f3;
+    }
+
+    .remove-placeholder {
+      width: 61px;
+      flex-shrink: 0;
+    }
+
+    .add-btn {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #1a4fa0;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+
+    .add-btn:hover {
+      text-decoration: underline;
+    }
+
+    .card-footer {
+      padding: 1rem 1.5rem;
+      background: #f5f5f3;
+      border-top: 0.5px solid rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-cancel {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: none;
+      color: #1a1a18;
+      border: 0.5px solid rgba(0,0,0,0.3);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .btn-cancel:hover {
+      background: #e8e8e5;
+    }
+
+    .btn-save {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: #1a1a18;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save:hover {
+      opacity: 0.85;
+    }
+
+    .error-msg {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      background: #fef2f2;
+      border-radius: 8px;
+    }
+
+    .error-msg p {
+      font-size: 13px;
+      color: #b91c1c;
+    }
+
+    .success-msg {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      background: #f0fdf4;
+      border-radius: 8px;
+    }
+
+    .success-msg p {
+      font-size: 13px;
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="width: 100%; max-width: 520px;">
+    <div class="card">
+      <div class="card-header">
+        <p>Set up delivery pipelines</p>
+      </div>
+
+      <div class="card-body">
+        <p>Set up your delivery pipeline structure:</p>
+
+        <label class="radio-label">
+          <input type="radio" name="pipeline" value="single" checked>
+          <span>Single pipeline</span>
+        </label>
+
+        <label class="radio-label">
+          <input type="radio" name="pipeline" value="multiple">
+          <span>Multiple pipeline</span>
+        </label>
+
+        <div id="pipelines-section">
+          <div id="pipeline-inputs"></div>
+          <button class="add-btn" onclick="addPipeline()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="7" cy="7" r="6.5" stroke="currentColor"/>
+              <path d="M7 4v6M4 7h6" stroke="currentColor" stroke-linecap="round"/>
+            </svg>
+            Add another pipeline
+          </button>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn-cancel" onclick="handleCancel()">Cancel</button>
+        <button class="btn-save" onclick="handleSave()">Save</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="error-msg">
+      <p>Please fill in all pipeline name fields before saving.</p>
+    </div>
+
+    <div class="success-msg" id="success-msg">
+      <p id="success-text"></p>
+    </div>
+  </div>
+
+  <script>
+    let pipelines = ['', ''];
+
+    function renderInputs() {
+      const container = document.getElementById('pipeline-inputs');
+      container.innerHTML = '';
+      pipelines.forEach((val, i) => {
+        const row = document.createElement('div');
+        row.className = 'pipeline-row';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'input-wrap';
+
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = 'Input pipeline name';
+        inp.value = val;
+        inp.addEventListener('input', e => {
+          pipelines[i] = e.target.value;
+          document.getElementById('error-msg').style.display = 'none';
+        });
+
+        const req = document.createElement('span');
+        req.className = 'required-star';
+        req.textContent = '*';
+
+        wrap.appendChild(inp);
+        wrap.appendChild(req);
+        row.appendChild(wrap);
+
+        if (i >= 2) {
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.textContent = 'Remove';
+          removeBtn.onclick = () => { pipelines.splice(i, 1); renderInputs(); };
+          row.appendChild(removeBtn);
+        } else {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'remove-placeholder';
+          row.appendChild(placeholder);
+        }
+
+        container.appendChild(row);
+      });
+    }
+
+    function addPipeline() {
+      pipelines.push('');
+      renderInputs();
+    }
+
+    function handleSave() {
+      const mode = document.querySelector('input[name="pipeline"]:checked').value;
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+
+      if (mode === 'multiple') {
+        const empty = pipelines.some(p => !p.trim());
+        if (empty) {
+          document.getElementById('error-msg').style.display = 'block';
+          return;
+        }
+      }
+
+      const text = mode === 'single'
+        ? 'Configuration saved: Single pipeline.'
+        : 'Configuration saved: Multiple pipelines — ' + pipelines.map(p => p.trim()).join(', ') + '.';
+
+      document.getElementById('success-text').textContent = text;
+      document.getElementById('success-msg').style.display = 'block';
+    }
+
+    function handleCancel() {
+      document.querySelectorAll('input[name="pipeline"]')[0].checked = true;
+      pipelines = ['', ''];
+      document.getElementById('pipelines-section').style.display = 'none';
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    document.querySelectorAll('input[name="pipeline"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isMultiple = radio.value === 'multiple';
+        document.getElementById('pipelines-section').style.display = isMultiple ? 'block' : 'none';
+        if (isMultiple) renderInputs();
+        document.getElementById('error-msg').style.display = 'none';
+        document.getElementById('success-msg').style.display = 'none';
+      });
+    });
+
+    renderInputs();
+  </script>
+
+</body>
+</html>
