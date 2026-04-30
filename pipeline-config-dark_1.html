@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set up delivery pipelines</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #111120;
+      color: #e0e0f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 3rem 1rem;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: #3a1a1a;
+      border: 1px solid #a03030;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      color: #f07878;
+      white-space: nowrap;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .wizard-wrap {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .wizard-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .btn-continue {
+      font-size: 13px;
+      padding: 7px 20px;
+      border-radius: 7px;
+      background: #7b6ef6;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+
+    .btn-continue:hover {
+      opacity: 0.88;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f0f0ff;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #8888aa;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    .radio-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .radio-row input[type="radio"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #7b6ef6;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .radio-row span {
+      font-size: 14px;
+      color: #ccccee;
+    }
+
+    #pipelines-section {
+      display: none;
+      margin-top: 1.25rem;
+    }
+
+    .pipe-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .pipe-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    .pipe-input {
+      width: 100%;
+      background: #0d0d1a;
+      border: 1px solid #3a3a58;
+      border-radius: 7px;
+      color: #e0e0f5;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 8px 28px 8px 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .pipe-input:hover {
+      border-color: #55557a;
+    }
+
+    .pipe-input:focus {
+      border-color: #7b6ef6;
+      box-shadow: 0 0 0 2px rgba(123, 110, 246, 0.25);
+    }
+
+    .pipe-input::placeholder {
+      color: #44445a;
+    }
+
+    .pipe-input.dup {
+      border-color: #a03030;
+      box-shadow: 0 0 0 2px rgba(160, 48, 48, 0.25);
+    }
+
+    .pipe-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6666aa;
+      font-size: 15px;
+      line-height: 1;
+      padding: 0;
+      font-family: inherit;
+    }
+
+    .pipe-clear:hover {
+      color: #e0e0f5;
+    }
+
+    .add-btn {
+      margin-top: 6px;
+      background: #2a2a44;
+      border: 1px solid #4a4a68;
+      border-radius: 7px;
+      color: #ccccee;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 7px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: inline-block;
+    }
+
+    .add-btn:hover {
+      background: #3a3a58;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast" class="toast"></div>
+
+  <div class="wizard-wrap">
+    <div class="wizard-toolbar">
+      <button class="btn-continue" onclick="handleContinue()">Continue</button>
+    </div>
+
+    <div class="card">
+      <h3>Set up delivery pipelines</h3>
+      <p class="subtitle">Set up your delivery pipeline structure:</p>
+
+      <label class="radio-row">
+        <input type="radio" name="pipeline" value="single" checked>
+        <span>Single pipeline</span>
+      </label>
+
+      <label class="radio-row">
+        <input type="radio" name="pipeline" value="multiple">
+        <span>Multiple pipeline</span>
+      </label>
+
+      <div id="pipelines-section">
+        <div id="pipeline-inputs"></div>
+        <button class="add-btn" onclick="addPipeline()">Add pipeline</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let pipelines = ['', ''];
+    let toastTimer = null;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function renderInputs() {
+      const container = document.getElementById('pipeline-inputs');
+      container.innerHTML = '';
+
+      pipelines.forEach((val, i) => {
+        const row = document.createElement('div');
+        row.className = 'pipe-row';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'pipe-wrap';
+
+        const inp = document.createElement('input');
+        inp.className = 'pipe-input';
+        inp.type = 'text';
+        inp.placeholder = 'Pipeline name';
+        inp.value = val;
+        inp.addEventListener('input', e => {
+          pipelines[i] = e.target.value;
+          document.querySelectorAll('.pipe-input').forEach(el => el.classList.remove('dup'));
+        });
+
+        wrap.appendChild(inp);
+
+        if (i >= 2) {
+          const clr = document.createElement('button');
+          clr.className = 'pipe-clear';
+          clr.textContent = '✕';
+          clr.title = 'Remove';
+          clr.onclick = e => {
+            e.stopPropagation();
+            pipelines.splice(i, 1);
+            renderInputs();
+          };
+          wrap.appendChild(clr);
+        }
+
+        row.appendChild(wrap);
+        container.appendChild(row);
+      });
+    }
+
+    function addPipeline() {
+      pipelines.push('');
+      renderInputs();
+      const inputs = document.querySelectorAll('.pipe-input');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }
+
+    function handleContinue() {
+      const mode = document.querySelector('input[name="pipeline"]:checked').value;
+      document.querySelectorAll('.pipe-input').forEach(el => el.classList.remove('dup'));
+
+      if (mode === 'multiple') {
+        const empty = pipelines.some(p => !p.trim());
+        if (empty) { showToast('Please fill in all pipeline name fields.'); return; }
+
+        const names = pipelines.map(p => p.trim().toLowerCase());
+        const seen = {};
+        let hasDup = false;
+        const inputs = document.querySelectorAll('.pipe-input');
+        names.forEach((name, i) => {
+          if (seen[name] !== undefined) {
+            inputs[i].classList.add('dup');
+            inputs[seen[name]].classList.add('dup');
+            hasDup = true;
+          } else {
+            seen[name] = i;
+          }
+        });
+        if (hasDup) { showToast('Pipeline names must be unique.'); return; }
+      }
+
+      alert('Configuration saved: ' + (mode === 'single' ? 'Single pipeline.' : 'Multiple pipelines — ' + pipelines.map(p => p.trim()).join(', ') + '.'));
+    }
+
+    document.querySelectorAll('input[name="pipeline"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isMultiple = radio.value === 'multiple';
+        document.getElementById('pipelines-section').style.display = isMultiple ? 'block' : 'none';
+        if (isMultiple) {
+          renderInputs();
+          setTimeout(() => { const f = document.querySelector('.pipe-input'); if (f) f.focus(); }, 50);
+        }
+      });
+    });
+
+    renderInputs();
+  </script>
+
+</body>
+</html>
